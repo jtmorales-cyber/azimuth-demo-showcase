@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useCallback } from 'react';
-import { Canvas, useThree } from '@react-three/fiber';
+import { useEffect, useCallback, useRef } from 'react';
+import { Canvas, useThree, useFrame } from '@react-three/fiber';
+import * as THREE from 'three';
 import {
   EffectComposer,
   Bloom,
@@ -29,6 +30,44 @@ function SceneSetup() {
   }, [camera]);
 
   return null;
+}
+
+/**
+ * Dynamic ambient lighting that increases during the gauntlet scene.
+ * The gauntlet needs more light since its only sources are emissive strips
+ * and two fixed RectAreaLights. A directional light simulating overhead
+ * fluorescent coverage fills the corridor evenly.
+ */
+function GauntletLighting() {
+  const lightRef = useRef<THREE.DirectionalLight>(null);
+  const ambientRef = useRef<THREE.AmbientLight>(null);
+
+  useFrame(() => {
+    const { currentScene } = usePortalStore.getState();
+    const isGauntlet = currentScene === 'boot' || currentScene === 'gauntlet';
+
+    // Gauntlet: stronger overhead fill. Hub: dim ambient only.
+    if (lightRef.current) {
+      const target = isGauntlet ? 0.6 : 0;
+      lightRef.current.intensity += (target - lightRef.current.intensity) * 0.08;
+    }
+    if (ambientRef.current) {
+      const target = isGauntlet ? 0.4 : 0.15;
+      ambientRef.current.intensity += (target - ambientRef.current.intensity) * 0.08;
+    }
+  });
+
+  return (
+    <>
+      <ambientLight ref={ambientRef} intensity={0.4} />
+      <directionalLight
+        ref={lightRef}
+        color="#C8C8C8"
+        intensity={0.6}
+        position={[0, 10, 0]}
+      />
+    </>
+  );
 }
 
 function HubNodes() {
@@ -100,7 +139,7 @@ export default function Scene() {
     >
       <SceneSetup />
       <CameraController />
-      <ambientLight intensity={0.15} />
+      <GauntletLighting />
       <BootSequence3D />
       <DissolveTransition>
         <GauntletGeometry />

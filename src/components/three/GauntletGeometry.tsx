@@ -4,7 +4,7 @@ import { useRef, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Text } from '@react-three/drei';
 import * as THREE from 'three';
-import { usePortalStore, type SceneName } from '@/state/portalStore';
+import { usePortalStore } from '@/state/portalStore';
 
 // ---------------------------------------------------------------------------
 // Constants — Gauntlet Exception Rule (grayscale only)
@@ -31,8 +31,7 @@ const DOOR_NUMBERS = [
 // Branch angles (degrees) — non-standard, Escher-like
 const BRANCH_ANGLES = [30, 70, 110, -30, -70, -110];
 
-// Scenes where gauntlet is visible
-const VISIBLE_SCENES = new Set<SceneName>(['boot', 'gauntlet']);
+// Visibility is managed by DissolveTransition wrapper
 
 // ---------------------------------------------------------------------------
 // Shared materials (created once, reused across all segments)
@@ -55,7 +54,7 @@ const doorMaterial = new THREE.MeshStandardMaterial({
 const lightMaterial = new THREE.MeshStandardMaterial({
   color: LIGHT_COLOR,
   emissive: LIGHT_COLOR,
-  emissiveIntensity: 0.3,
+  emissiveIntensity: 0.8,
   roughness: 0.5,
   metalness: 0,
 });
@@ -249,7 +248,6 @@ function CorridorSegment({ config }: { config: SegmentConfig }) {
 
 export default function GauntletGeometry() {
   const groupRef = useRef<THREE.Group>(null);
-  const visibilityRef = useRef(0);
 
   // Segment state — useState so React re-renders on recycle
   const [segments, setSegments] = useState<SegmentConfig[]>(() =>
@@ -261,19 +259,12 @@ export default function GauntletGeometry() {
   const recycleCounter = useRef(SEGMENT_COUNT);
 
   useFrame(() => {
-    const { currentScene, scrollProgress } = usePortalStore.getState();
+    const { scrollProgress } = usePortalStore.getState();
 
-    // Scene visibility — fade in/out
-    const targetVis = VISIBLE_SCENES.has(currentScene) ? 1 : 0;
-    visibilityRef.current += (targetVis - visibilityRef.current) * 0.08;
+    // NOTE: Visibility is managed by DissolveTransition wrapper — NOT here.
+    // DissolveTransition handles showing during boot/gauntlet and hiding after dissolve.
 
     if (!groupRef.current) return;
-
-    if (visibilityRef.current < 0.001) {
-      groupRef.current.visible = false;
-      return;
-    }
-    groupRef.current.visible = true;
 
     // Estimate camera Z from scroll progress (gauntlet range 0.05–0.20)
     const gauntletProgress = Math.max(0, Math.min(1, (scrollProgress - 0.05) / 0.15));

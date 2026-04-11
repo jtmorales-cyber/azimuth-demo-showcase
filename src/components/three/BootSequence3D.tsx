@@ -101,17 +101,20 @@ export default function BootSequence3D({ onComplete }: BootSequence3DProps) {
     });
   }, []);
 
-  // Start the 2.5s timeline on mount
+  // Start the 2.5s timeline after a brief render delay
   useEffect(() => {
-    gsap.to(progress.current, {
-      value: 1,
-      duration: BOOT_DURATION,
-      ease: 'power2.inOut',
-      onComplete: () => {
-        completedRef.current = true;
-        onComplete?.();
-      },
-    });
+    const timer = setTimeout(() => {
+      gsap.to(progress.current, {
+        value: 1,
+        duration: BOOT_DURATION,
+        ease: 'power2.inOut',
+        onComplete: () => {
+          completedRef.current = true;
+          onComplete?.();
+        },
+      });
+    }, 300); // 300ms delay so page renders before animation starts
+    return () => clearTimeout(timer);
   }, [onComplete]);
 
   useFrame((_, delta) => {
@@ -151,13 +154,13 @@ export default function BootSequence3D({ onComplete }: BootSequence3DProps) {
     if (coreRef.current) {
       // Core ignites at 20% of timeline, peaks at 60%
       const igniteT = Math.max(0, Math.min(1, (t - 0.2) / 0.4));
-      coreRef.current.intensity = igniteT * 3.0;
-      coreRef.current.distance = 8 + igniteT * 4;
+      coreRef.current.intensity = igniteT * 4.0;
+      coreRef.current.distance = 15 + igniteT * 10;
 
       // Dim at end for transition
       if (t > 0.8) {
         const dimT = (t - 0.8) / 0.2;
-        coreRef.current.intensity = 3.0 * (1 - dimT);
+        coreRef.current.intensity = 4.0 * (1 - dimT);
       }
     }
 
@@ -194,8 +197,8 @@ export default function BootSequence3D({ onComplete }: BootSequence3DProps) {
   });
 
   return (
-    <group ref={groupRef} position={[0, 0, 0]}>
-      {/* Crystalline "A" monogram */}
+    <group ref={groupRef} position={[0, 2, 20]} scale={[4, 4, 4]}>
+      {/* Crystalline "A" monogram — scaled 4x, positioned near boot camera */}
       <mesh ref={aRef} geometry={aGeometry} position={[0, 0, -0.15]}>
         <meshPhysicalMaterial
           color={COLORS.CYAN_STRUCT}
@@ -216,7 +219,7 @@ export default function BootSequence3D({ onComplete }: BootSequence3DProps) {
         ref={coreRef}
         color={COLORS.AMBER_CORE}
         intensity={0}
-        distance={8}
+        distance={20}
         decay={2}
       />
 
