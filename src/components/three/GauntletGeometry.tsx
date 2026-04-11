@@ -208,34 +208,36 @@ function CorridorSegment({ config }: { config: SegmentConfig }) {
         );
       })}
 
-      {/* Branch corridor stub */}
+      {/* Branch corridor stub — positioned outside the main corridor wall
+           to prevent geometry from protruding into the camera path.
+           The branch extends outward from the wall, never inward. */}
       <group
-        position={[bx, 0, 0]}
-        rotation={[0, branchRad * config.branchSide, 0]}
+        position={[config.branchSide * (hw + 0.1), 0, 0]}
+        rotation={[0, config.branchSide * Math.PI / 2 + branchRad * 0.3, 0]}
       >
         {/* Branch floor */}
-        <mesh position={[config.branchSide * 2, -hh, 0]} rotation={[-Math.PI / 2, 0, 0]} material={concreteMaterial}>
-          <planeGeometry args={[2.5, 6]} />
+        <mesh position={[0, -hh, -2.5]} rotation={[-Math.PI / 2, 0, 0]} material={concreteMaterial}>
+          <planeGeometry args={[2.0, 5]} />
         </mesh>
         {/* Branch ceiling */}
-        <mesh position={[config.branchSide * 2, hh, 0]} rotation={[Math.PI / 2, 0, 0]} material={concreteMaterial}>
-          <planeGeometry args={[2.5, 6]} />
+        <mesh position={[0, hh, -2.5]} rotation={[Math.PI / 2, 0, 0]} material={concreteMaterial}>
+          <planeGeometry args={[2.0, 5]} />
         </mesh>
-        {/* Branch far wall (dead end visible) */}
-        <mesh position={[config.branchSide * 2, 0, -3]} material={concreteMaterial}>
-          <planeGeometry args={[2.5, CORRIDOR_HEIGHT]} />
+        {/* Branch far wall (dead end — visible through doorway) */}
+        <mesh position={[0, 0, -5]} material={concreteMaterial}>
+          <planeGeometry args={[2.0, CORRIDOR_HEIGHT]} />
         </mesh>
-        {/* Branch side wall */}
-        <mesh
-          position={[config.branchSide * 3.25, 0, 0]}
-          rotation={[0, -config.branchSide * Math.PI / 2, 0]}
-          material={concreteMaterial}
-        >
-          <planeGeometry args={[6, CORRIDOR_HEIGHT]} />
+        {/* Branch left wall */}
+        <mesh position={[-1, 0, -2.5]} rotation={[0, Math.PI / 2, 0]} material={concreteMaterial}>
+          <planeGeometry args={[5, CORRIDOR_HEIGHT]} />
+        </mesh>
+        {/* Branch right wall */}
+        <mesh position={[1, 0, -2.5]} rotation={[0, -Math.PI / 2, 0]} material={concreteMaterial}>
+          <planeGeometry args={[5, CORRIDOR_HEIGHT]} />
         </mesh>
         {/* Branch light strip */}
-        <mesh position={[config.branchSide * 2, hh - 0.06, -1]} material={lightMaterial}>
-          <boxGeometry args={[1.2, 0.03, 0.1]} />
+        <mesh position={[0, hh - 0.06, -2]} material={lightMaterial}>
+          <boxGeometry args={[1.0, 0.03, 0.1]} />
         </mesh>
       </group>
     </group>

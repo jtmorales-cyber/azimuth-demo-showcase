@@ -60,10 +60,12 @@ export default function DissolveTransition({ children }: DissolveTransitionProps
 
     if (!groupRef.current) return;
 
-    // --- Visibility: show during boot, gauntlet, and transition ---
-    // Hide only after dissolve is fully complete (scroll > DISSOLVE_SCROLL_END)
+    // --- Visibility: show during gauntlet and transition ONLY ---
+    // Hidden during boot (boot sequence plays alone) and after dissolve completes
+    const currentScene = usePortalStore.getState().currentScene;
+    const isBootScene = currentScene === 'boot';
     const pastDissolve = scrollProgress >= DISSOLVE_SCROLL_END;
-    groupRef.current.visible = !pastDissolve;
+    groupRef.current.visible = !isBootScene && !pastDissolve;
 
     if (!groupRef.current.visible) {
       // Clean up any applied dissolve materials
