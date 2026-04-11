@@ -1,5 +1,3 @@
-// Gauntlet dissolution shader
-uniform float progress;
-void main() {
-  gl_FragColor = vec4(1.0);
-}
+// DEPRECATED — dissolve shader split into dissolve.vert.glsl and dissolve.frag.glsl
+// This file kept for backwards compatibility with any imports.
+// See DissolveTransition.tsx for usage.
