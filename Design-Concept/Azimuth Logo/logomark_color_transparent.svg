@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 480">
+  <defs>
+    <mask id="band1"><rect width="500" height="480" fill="white"/>
+      <rect x="0" y="296" width="500" height="27" fill="black"/></mask>
+    <mask id="band2"><rect width="500" height="480" fill="white"/>
+      <rect x="0" y="346" width="500" height="16" fill="black"/></mask>
+    <mask id="bands"><rect width="500" height="480" fill="white"/>
+      <rect x="0" y="296" width="500" height="27" fill="black"/>
+      <rect x="182" y="346" width="136" height="16" fill="black"/></mask>
+  </defs>
+  <g mask="url(#band1)">
+    <path d="M 190 40 L 310 40 L 475 432 L 357 432 L 331 371 L 366 371 L 260 116 L 240 116 L 134 371 L 169 371 L 143 432 L 25 432 Z" fill="#00B4CF"/>
+  </g>
+  <g mask="url(#bands)">
+    <circle cx="250" cy="302" r="68" fill="#FF5601"/>
+  </g>
+</svg>
