@@ -9,6 +9,7 @@ import {
   ToneMapping,
 } from '@react-three/postprocessing';
 import { ToneMappingMode } from 'postprocessing';
+import BootSequence3D from './BootSequence3D';
 import DepthGrid from './DepthGrid';
 import GauntletGeometry from './GauntletGeometry';
 import DissolveTransition from './DissolveTransition';
@@ -100,6 +101,7 @@ export default function Scene() {
       <SceneSetup />
       <CameraController />
       <ambientLight intensity={0.15} />
+      <BootSequence3D />
       <DissolveTransition>
         <GauntletGeometry />
       </DissolveTransition>
