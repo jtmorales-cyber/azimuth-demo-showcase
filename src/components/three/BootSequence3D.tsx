@@ -4,8 +4,7 @@ import { useRef, useMemo, useEffect } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import gsap from 'gsap';
-import { COLORS, EASING } from '@/utils/constants';
-import { usePortalStore } from '@/state/portalStore';
+import { COLORS } from '@/utils/constants';
 
 // ---------------------------------------------------------------------------
 // Config
@@ -123,11 +122,7 @@ export default function BootSequence3D({ onComplete }: BootSequence3DProps) {
 
     if (!groupRef.current) return;
 
-    const currentScene = usePortalStore.getState().currentScene;
-    // Only visible during boot
-    groupRef.current.visible = currentScene === 'boot';
-
-    if (!groupRef.current.visible) return;
+    // Visibility is managed by SceneGroup wrapper in Scene.tsx
 
     // --- A monogram materialization ---
     if (aRef.current) {

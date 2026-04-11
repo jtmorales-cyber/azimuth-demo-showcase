@@ -10,6 +10,7 @@ import {
   ToneMapping,
 } from '@react-three/postprocessing';
 import { ToneMappingMode } from 'postprocessing';
+import SceneGroup from './SceneGroup';
 import BootSequence3D from './BootSequence3D';
 import DepthGrid from './DepthGrid';
 import GauntletGeometry from './GauntletGeometry';
@@ -22,34 +23,33 @@ import { NODE_POSITIONS } from '@/camera/flightPaths';
 import { COLORS } from '@/utils/constants';
 import { usePortalStore, type SceneName } from '@/state/portalStore';
 
+// ---------------------------------------------------------------------------
+// Scene setup
+// ---------------------------------------------------------------------------
+
 function SceneSetup() {
   const { camera } = useThree();
-
   useEffect(() => {
     camera.layers.enableAll();
   }, [camera]);
-
   return null;
 }
 
-/**
- * Dynamic ambient lighting that increases during the gauntlet scene.
- * The gauntlet needs more light since its only sources are emissive strips
- * and two fixed RectAreaLights. A directional light simulating overhead
- * fluorescent coverage fills the corridor evenly.
- */
-function GauntletLighting() {
-  const lightRef = useRef<THREE.DirectionalLight>(null);
+// ---------------------------------------------------------------------------
+// Dynamic lighting — bright fluorescent during gauntlet, dim ambient for hub
+// ---------------------------------------------------------------------------
+
+function DynamicLighting() {
+  const directionalRef = useRef<THREE.DirectionalLight>(null);
   const ambientRef = useRef<THREE.AmbientLight>(null);
 
   useFrame(() => {
     const { currentScene } = usePortalStore.getState();
     const isGauntlet = currentScene === 'boot' || currentScene === 'gauntlet';
 
-    // Gauntlet: stronger overhead fill. Hub: dim ambient only.
-    if (lightRef.current) {
+    if (directionalRef.current) {
       const target = isGauntlet ? 0.6 : 0;
-      lightRef.current.intensity += (target - lightRef.current.intensity) * 0.08;
+      directionalRef.current.intensity += (target - directionalRef.current.intensity) * 0.08;
     }
     if (ambientRef.current) {
       const target = isGauntlet ? 0.4 : 0.15;
@@ -59,32 +59,38 @@ function GauntletLighting() {
 
   return (
     <>
-      <ambientLight ref={ambientRef} intensity={0.4} />
+      <ambientLight ref={ambientRef} intensity={0.15} />
       <directionalLight
-        ref={lightRef}
+        ref={directionalRef}
         color="#C8C8C8"
-        intensity={0.6}
+        intensity={0}
         position={[0, 10, 0]}
       />
     </>
   );
 }
 
-function HubNodes() {
+// ---------------------------------------------------------------------------
+// Hub content — NOVA + tool nodes + compass ring
+// Only visible during hub and showcase scenes
+// ---------------------------------------------------------------------------
+
+const HUB_SCENES: SceneName[] = ['hub', 'maps', 'kit', 'base', 'scout', 'impact', 'closing'];
+
+function HubWorld() {
   const hoveredNode = usePortalStore((s) => s.hoveredNode);
-  const setHoveredNode = usePortalStore((s) => s.setHoveredNode);
   const setScene = usePortalStore((s) => s.setScene);
   const currentScene = usePortalStore((s) => s.currentScene);
 
   const selectNode = useCallback(
-    (scene: SceneName) => {
-      setScene(scene);
-    },
+    (scene: SceneName) => { setScene(scene); },
     [setScene]
   );
 
   return (
-    <>
+    <SceneGroup scenes={HUB_SCENES}>
+      <NOVASphere position={[0, 0, 0]} />
+      <CompassRing radius={8} activeNode={hoveredNode} />
       <ToolNode
         geometry="dodeca"
         color={COLORS.AMBER_CORE}
@@ -121,11 +127,13 @@ function HubNodes() {
         onSelect={() => selectNode('scout')}
         isActive={currentScene === 'scout'}
       />
-
-      <CompassRing radius={8} activeNode={hoveredNode} />
-    </>
+    </SceneGroup>
   );
 }
+
+// ---------------------------------------------------------------------------
+// Main Scene — proper isolation between visual worlds
+// ---------------------------------------------------------------------------
 
 export default function Scene() {
   return (
@@ -139,14 +147,24 @@ export default function Scene() {
     >
       <SceneSetup />
       <CameraController />
-      <GauntletLighting />
-      <BootSequence3D />
+      <DynamicLighting />
+
+      {/* BOOT: "A" monogram — visible only during boot */}
+      <SceneGroup scenes={['boot']}>
+        <BootSequence3D />
+      </SceneGroup>
+
+      {/* GAUNTLET: corridors — visible during boot + gauntlet, dissolves at transition */}
       <DissolveTransition>
         <GauntletGeometry />
       </DissolveTransition>
-      <NOVASphere position={[0, 0, 0]} />
-      <HubNodes />
+
+      {/* HUB: NOVA sphere, compass ring, tool nodes — visible after transition */}
+      <HubWorld />
+
+      {/* DEPTH GRID: visible during hub + showcases (has internal scene check) */}
       <DepthGrid opacity={0.22} color="#00CED1" />
+
       <EffectComposer>
         <Bloom
           luminanceThreshold={0.6}
