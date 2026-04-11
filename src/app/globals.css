@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Core Color Tokens — design-system.md Section 1.1 */
+  --deep-navy: #0A0E1A;
+  --midnight: #1C2331;
+  --cyan-struct: #00CED1;
+  --slate-blue: #526A82;
+  --amber-core: #E8A030;
+  --sage-muted: #98A89D;
+  --gauntlet-gray: #6B6B6B;
+  --scout-blue: #0C447C;
+  --silver: #D8DEE9;
+  --calm-purple: #7B68AE;
+  --peak-light: #FFFFFF;
+
+  /* Gauntlet Exception Colors — Section 1.3 */
+  --gauntlet-bg-deep: #0A0E1A;
+  --gauntlet-bg-mid: #1C2331;
+  --gauntlet-surface: #6B6B6B;
+  --gauntlet-light: #C8C8C8;
+
+  /* Glass-Morphic Panel Colors — Section 1.4 */
+  --glass-bg: rgba(28, 35, 49, 0.65);
+  --glass-border: rgba(0, 206, 209, 0.15);
+  --glass-blur: 20px;
+  --glass-highlight: rgba(255, 255, 255, 0.05);
+  --glass-bg-active: rgba(28, 35, 49, 0.80);
+  --glass-border-active: rgba(0, 206, 209, 0.30);
+
+  /* Typography Scale — Section 2.2 */
+  --text-hero: 3.5rem;
+  --text-h1: 2.5rem;
+  --text-h2: 1.75rem;
+  --text-h3: 1.25rem;
+  --text-body: 1rem;
+  --text-caption: 0.8125rem;
+  --text-data: 2.25rem;
+
+  /* Spacing Scale — Section 3.1 */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+  --space-4xl: 96px;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--deep-navy);
+  color: var(--silver);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Accessibility — Section 10.1 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
