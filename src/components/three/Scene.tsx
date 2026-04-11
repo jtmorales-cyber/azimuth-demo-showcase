@@ -10,6 +10,7 @@ import {
 } from '@react-three/postprocessing';
 import { ToneMappingMode } from 'postprocessing';
 import DepthGrid from './DepthGrid';
+import GauntletGeometry from './GauntletGeometry';
 import NOVASphere from './NOVASphere';
 import CompassRing from './CompassRing';
 import ToolNode from './ToolNode';
@@ -98,6 +99,7 @@ export default function Scene() {
       <SceneSetup />
       <CameraController />
       <ambientLight intensity={0.15} />
+      <GauntletGeometry />
       <NOVASphere position={[0, 0, 0]} />
       <HubNodes />
       <DepthGrid opacity={0.22} color="#00CED1" />
