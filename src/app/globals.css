@@ -61,6 +61,18 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Glass Panel hover state — Section 1.4 */
+.glass-panel:hover {
+  background: var(--glass-bg-active);
+  border-color: var(--glass-border-active);
+}
+
+/* Focus ring for accessibility — Section 10.1 */
+.focus-cyan:focus-visible {
+  outline: 3px solid var(--cyan-struct);
+  outline-offset: 2px;
+}
+
 /* Accessibility — Section 10.1 */
 @media (prefers-reduced-motion: reduce) {
   *,
