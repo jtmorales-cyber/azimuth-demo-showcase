@@ -14,7 +14,6 @@ import SceneGroup from './SceneGroup';
 import BootSequence3D from './BootSequence3D';
 import DepthGrid from './DepthGrid';
 import GauntletGeometry from './GauntletGeometry';
-import DissolveTransition from './DissolveTransition';
 import NOVASphere from './NOVASphere';
 import CompassRing from './CompassRing';
 import ToolNode from './ToolNode';
@@ -29,50 +28,13 @@ import { usePortalStore, type SceneName } from '@/state/portalStore';
 
 function SceneSetup() {
   const { camera } = useThree();
-  useEffect(() => {
-    camera.layers.enableAll();
-  }, [camera]);
+  useEffect(() => { camera.layers.enableAll(); }, [camera]);
   return null;
 }
 
 // ---------------------------------------------------------------------------
-// Dynamic lighting — bright fluorescent during gauntlet, dim ambient for hub
-// ---------------------------------------------------------------------------
-
-function DynamicLighting() {
-  const directionalRef = useRef<THREE.DirectionalLight>(null);
-  const ambientRef = useRef<THREE.AmbientLight>(null);
-
-  useFrame(() => {
-    const { currentScene } = usePortalStore.getState();
-    const isGauntlet = currentScene === 'boot' || currentScene === 'gauntlet';
-
-    if (directionalRef.current) {
-      const target = isGauntlet ? 0.6 : 0;
-      directionalRef.current.intensity += (target - directionalRef.current.intensity) * 0.08;
-    }
-    if (ambientRef.current) {
-      const target = isGauntlet ? 0.4 : 0.15;
-      ambientRef.current.intensity += (target - ambientRef.current.intensity) * 0.08;
-    }
-  });
-
-  return (
-    <>
-      <ambientLight ref={ambientRef} intensity={0.15} />
-      <directionalLight
-        ref={directionalRef}
-        color="#C8C8C8"
-        intensity={0}
-        position={[0, 10, 0]}
-      />
-    </>
-  );
-}
-
-// ---------------------------------------------------------------------------
 // Hub content — NOVA + tool nodes + compass ring
-// Only visible during hub and showcase scenes
+// Only visible during hub and showcase scenes via SceneGroup
 // ---------------------------------------------------------------------------
 
 const HUB_SCENES: SceneName[] = ['hub', 'maps', 'kit', 'base', 'scout', 'impact', 'closing'];
@@ -91,54 +53,35 @@ function HubWorld() {
     <SceneGroup scenes={HUB_SCENES}>
       <NOVASphere position={[0, 0, 0]} />
       <CompassRing radius={8} activeNode={hoveredNode} />
-      <ToolNode
-        geometry="dodeca"
-        color={COLORS.AMBER_CORE}
-        label="MAPS"
-        subtitle="Pre-Enlistment"
+      <ToolNode geometry="dodeca" color={COLORS.AMBER_CORE} label="MAPS" subtitle="Pre-Enlistment"
         position={[NODE_POSITIONS.maps.x, NODE_POSITIONS.maps.y, NODE_POSITIONS.maps.z]}
-        onSelect={() => selectNode('maps')}
-        isActive={currentScene === 'maps'}
-      />
-      <ToolNode
-        geometry="cube"
-        color={COLORS.CYAN_STRUCT}
-        label="K.I.T."
-        subtitle="Active Duty"
+        onSelect={() => selectNode('maps')} isActive={currentScene === 'maps'} />
+      <ToolNode geometry="cube" color={COLORS.CYAN_STRUCT} label="K.I.T." subtitle="Active Duty"
         position={[NODE_POSITIONS.kit.x, NODE_POSITIONS.kit.y, NODE_POSITIONS.kit.z]}
-        onSelect={() => selectNode('kit')}
-        isActive={currentScene === 'kit'}
-      />
-      <ToolNode
-        geometry="sphere"
-        color={COLORS.CALM_PURPLE}
-        label="BASE"
-        subtitle="Wellness"
+        onSelect={() => selectNode('kit')} isActive={currentScene === 'kit'} />
+      <ToolNode geometry="sphere" color={COLORS.CALM_PURPLE} label="BASE" subtitle="Wellness"
         position={[NODE_POSITIONS.base.x, NODE_POSITIONS.base.y, NODE_POSITIONS.base.z]}
-        onSelect={() => selectNode('base')}
-        isActive={currentScene === 'base'}
-      />
-      <ToolNode
-        geometry="octa"
-        color={COLORS.SCOUT_BLUE}
-        label="SCOUT"
-        subtitle="Claims"
+        onSelect={() => selectNode('base')} isActive={currentScene === 'base'} />
+      <ToolNode geometry="octa" color={COLORS.SCOUT_BLUE} label="SCOUT" subtitle="Claims"
         position={[NODE_POSITIONS.scout.x, NODE_POSITIONS.scout.y, NODE_POSITIONS.scout.z]}
-        onSelect={() => selectNode('scout')}
-        isActive={currentScene === 'scout'}
-      />
+        onSelect={() => selectNode('scout')} isActive={currentScene === 'scout'} />
     </SceneGroup>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Main Scene — proper isolation between visual worlds
+// Main Scene
+// Each component handles its own visibility via return null pattern:
+//   BootSequence3D:  returns null when currentScene !== 'boot'
+//   GauntletGeometry: returns null when currentScene !== 'gauntlet'
+//   HubWorld: uses SceneGroup for hub/showcase scenes
+//   DepthGrid: internal scene check
 // ---------------------------------------------------------------------------
 
 export default function Scene() {
   return (
     <Canvas
-      camera={{ position: [0, 3, 20], fov: 50 }}
+      camera={{ position: [0, 0, 5], fov: 50 }}
       gl={{ antialias: true, alpha: false }}
       onCreated={({ gl }) => {
         gl.setClearColor('#0A0E1A');
@@ -147,30 +90,22 @@ export default function Scene() {
     >
       <SceneSetup />
       <CameraController />
-      <DynamicLighting />
+      <ambientLight intensity={0.15} />
 
-      {/* BOOT: "A" monogram — visible only during boot */}
-      <SceneGroup scenes={['boot']}>
-        <BootSequence3D />
-      </SceneGroup>
+      {/* BOOT: crystalline A monogram — unmounts when not boot */}
+      <BootSequence3D />
 
-      {/* GAUNTLET: corridors — visible during boot + gauntlet, dissolves at transition */}
-      <DissolveTransition>
-        <GauntletGeometry />
-      </DissolveTransition>
+      {/* GAUNTLET: corridors — unmounts when not gauntlet */}
+      <GauntletGeometry />
 
-      {/* HUB: NOVA sphere, compass ring, tool nodes — visible after transition */}
+      {/* HUB: NOVA + compass + tool nodes — hidden outside hub scenes */}
       <HubWorld />
 
-      {/* DEPTH GRID: visible during hub + showcases (has internal scene check) */}
+      {/* DEPTH GRID: internal scene visibility check */}
       <DepthGrid opacity={0.22} color="#00CED1" />
 
       <EffectComposer>
-        <Bloom
-          luminanceThreshold={0.6}
-          luminanceSmoothing={0.3}
-          intensity={0.8}
-        />
+        <Bloom luminanceThreshold={0.6} luminanceSmoothing={0.3} intensity={0.8} />
         <Vignette darkness={0.4} offset={0.3} />
         <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
       </EffectComposer>

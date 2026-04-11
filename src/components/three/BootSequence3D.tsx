@@ -1,251 +1,246 @@
 'use client';
 
-import { useRef, useMemo, useEffect } from 'react';
-import { useFrame, useThree } from '@react-three/fiber';
+import { useRef, useMemo, useEffect, useState } from 'react';
+import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import gsap from 'gsap';
 import { COLORS } from '@/utils/constants';
+import { usePortalStore } from '@/state/portalStore';
 
 // ---------------------------------------------------------------------------
-// Config
+// Config — adapted from reference azimuth-portal BootSequence
 // ---------------------------------------------------------------------------
 
-const BOOT_DURATION = 2.5; // seconds
-const DAMPING = 3.5;       // compass settling damping coefficient
-const INITIAL_SPIN = 12;   // initial angular velocity (rad/s)
+const PHASE_BLACK = 500;    // ms
+const PHASE_RESOLVE = 1200; // ms — logo fades in
+const PHASE_HOLD = 600;     // ms — logo visible
+const PHASE_SCATTER = 500;  // ms — particles burst out
+
+const PARTICLE_COUNT = 500;
+
+type BootPhase = 'black' | 'resolve' | 'hold' | 'scatter' | 'done';
 
 // ---------------------------------------------------------------------------
-// "A" monogram geometry — derived from SVG path
-// Scaled to fit ~2 unit height, centered at origin
+// "A" monogram — from SVG logomark (same approach as reference project)
 // ---------------------------------------------------------------------------
 
-function createAShape(): THREE.Shape {
-  const scale = 0.005; // SVG viewBox 500×480 → ~2.5×2.4 units
-  const offsetX = -250; // center horizontally
-  const offsetY = -240; // center vertically
-
-  const s = (x: number, y: number) => ({
-    x: (x + offsetX) * scale,
-    y: -(y + offsetY) * scale, // flip Y
-  });
+function createAzimuthAShape(): THREE.Shape {
+  const s = 1 / 100;
+  const cx = 250, cy = 240;
 
   const shape = new THREE.Shape();
+  shape.moveTo((190 - cx) * s, -(40 - cy) * s);
+  shape.lineTo((310 - cx) * s, -(40 - cy) * s);
+  shape.lineTo((475 - cx) * s, -(432 - cy) * s);
+  shape.lineTo((357 - cx) * s, -(432 - cy) * s);
+  shape.lineTo((331 - cx) * s, -(371 - cy) * s);
+  shape.lineTo((366 - cx) * s, -(371 - cy) * s);
+  shape.lineTo((260 - cx) * s, -(116 - cy) * s);
+  shape.lineTo((240 - cx) * s, -(116 - cy) * s);
+  shape.lineTo((134 - cx) * s, -(371 - cy) * s);
+  shape.lineTo((169 - cx) * s, -(371 - cy) * s);
+  shape.lineTo((143 - cx) * s, -(432 - cy) * s);
+  shape.lineTo((25 - cx) * s, -(432 - cy) * s);
+  shape.closePath();
 
-  // Outer A shape
-  const p = s(190, 40);
-  shape.moveTo(p.x, p.y);
-
-  const points = [
-    s(310, 40), s(475, 432), s(357, 432), s(331, 371),
-    s(366, 371), s(260, 116), s(240, 116), s(134, 371),
-    s(169, 371), s(143, 432), s(25, 432),
-  ];
-  points.forEach((pt) => shape.lineTo(pt.x, pt.y));
-  shape.lineTo(p.x, p.y);
-
-  // Horizontal band void (y=296, height=27) — crossbar cutout
-  const hole1 = new THREE.Path();
-  const h1 = [s(80, 296), s(420, 296), s(420, 323), s(80, 323)];
-  hole1.moveTo(h1[0].x, h1[0].y);
-  h1.slice(1).forEach((pt) => hole1.lineTo(pt.x, pt.y));
-  hole1.lineTo(h1[0].x, h1[0].y);
-  shape.holes.push(hole1);
+  // Horizon band cutout
+  const band = new THREE.Path();
+  const b1y1 = -(296 - cy) * s;
+  const b1y2 = -(323 - cy) * s;
+  band.moveTo(-2.5, b1y1);
+  band.lineTo(2.5, b1y1);
+  band.lineTo(2.5, b1y2);
+  band.lineTo(-2.5, b1y2);
+  band.closePath();
+  shape.holes.push(band);
 
   return shape;
 }
 
 // ---------------------------------------------------------------------------
-// Compass settling physics — damped harmonic oscillator
+// Logo mesh sub-component
 // ---------------------------------------------------------------------------
 
-function compassAngle(t: number): number {
-  // θ(t) = A * e^(-γt) * cos(ωt) + drift*t
-  const amplitude = INITIAL_SPIN;
-  const decay = Math.exp(-DAMPING * t);
-  const oscillation = Math.cos(8 * t); // natural frequency
-  const drift = 0.15 * t; // slow processional drift
-  return amplitude * decay * oscillation * 0.1 + drift;
-}
-
-// ---------------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------------
-
-interface BootSequence3DProps {
-  onComplete?: () => void;
-}
-
-export default function BootSequence3D({ onComplete }: BootSequence3DProps) {
+function AzimuthLogo({ opacity }: { opacity: number }) {
   const groupRef = useRef<THREE.Group>(null);
-  const aRef = useRef<THREE.Mesh>(null);
-  const coreRef = useRef<THREE.PointLight>(null);
-  const haloRef = useRef<THREE.Mesh>(null);
-  const ringRef = useRef<THREE.Mesh>(null);
+  const elapsedRef = useRef(0);
 
-  const timeRef = useRef(0);
-  const completedRef = useRef(false);
+  const aShape = useMemo(() => createAzimuthAShape(), []);
 
-  // Animation progress (driven by GSAP)
-  const progress = useRef({ value: 0 });
+  const aMaterial = useMemo(() => new THREE.MeshPhysicalMaterial({
+    color: new THREE.Color('#00B4CF'),
+    transmission: 0.75,
+    thickness: 0.8,
+    roughness: 0.08,
+    ior: 1.9,
+    envMapIntensity: 1.5,
+    emissive: new THREE.Color('#00B4CF'),
+    emissiveIntensity: 0.15,
+    transparent: true,
+    opacity: 0,
+    clearcoat: 1.0,
+    clearcoatRoughness: 0.05,
+  }), []);
 
-  // Extruded A geometry
-  const aGeometry = useMemo(() => {
-    const shape = createAShape();
-    return new THREE.ExtrudeGeometry(shape, {
-      depth: 0.3,
-      bevelEnabled: true,
-      bevelThickness: 0.03,
-      bevelSize: 0.02,
-      bevelSegments: 3,
-    });
-  }, []);
+  const sunMaterial = useMemo(() => new THREE.MeshPhysicalMaterial({
+    color: new THREE.Color('#FF5601'),
+    emissive: new THREE.Color('#FF5601'),
+    emissiveIntensity: 0.8,
+    roughness: 0.3,
+    metalness: 0.1,
+    transparent: true,
+    opacity: 0,
+  }), []);
 
-  // Start the 2.5s timeline after a brief render delay
   useEffect(() => {
-    const timer = setTimeout(() => {
-      gsap.to(progress.current, {
-        value: 1,
-        duration: BOOT_DURATION,
-        ease: 'power2.inOut',
-        onComplete: () => {
-          completedRef.current = true;
-          onComplete?.();
-        },
-      });
-    }, 300); // 300ms delay so page renders before animation starts
-    return () => clearTimeout(timer);
-  }, [onComplete]);
+    aMaterial.opacity = opacity;
+    sunMaterial.opacity = opacity;
+    sunMaterial.emissiveIntensity = 0.8 * opacity;
+  }, [opacity, aMaterial, sunMaterial]);
 
   useFrame((_, delta) => {
-    const t = progress.current.value;
-    timeRef.current += delta;
-
     if (!groupRef.current) return;
-
-    // Visibility is managed by SceneGroup wrapper in Scene.tsx
-
-    // --- A monogram materialization ---
-    if (aRef.current) {
-      const mat = aRef.current.material as THREE.MeshPhysicalMaterial;
-
-      // Opacity ramps up 0→1 over first 40% of timeline
-      const materializeT = Math.min(1, t / 0.4);
-      mat.opacity = materializeT;
-      mat.transmission = 0.9 * materializeT;
-
-      // Compass settling rotation
-      aRef.current.rotation.y = compassAngle(timeRef.current);
-
-      // Scatter at end: scale down and spread
-      if (t > 0.85) {
-        const scatterT = (t - 0.85) / 0.15;
-        const s = 1 - scatterT * 0.5;
-        aRef.current.scale.setScalar(s);
-        mat.opacity = 1 - scatterT;
-      }
-    }
-
-    // --- Amber core ignition ---
-    if (coreRef.current) {
-      // Core ignites at 20% of timeline, peaks at 60%
-      const igniteT = Math.max(0, Math.min(1, (t - 0.2) / 0.4));
-      coreRef.current.intensity = igniteT * 4.0;
-      coreRef.current.distance = 15 + igniteT * 10;
-
-      // Dim at end for transition
-      if (t > 0.8) {
-        const dimT = (t - 0.8) / 0.2;
-        coreRef.current.intensity = 4.0 * (1 - dimT);
-      }
-    }
-
-    // --- Core halo mesh ---
-    if (haloRef.current) {
-      const mat = haloRef.current.material as THREE.MeshStandardMaterial;
-      const igniteT = Math.max(0, Math.min(1, (t - 0.2) / 0.3));
-      mat.opacity = igniteT * 0.8;
-      mat.emissiveIntensity = igniteT * 2.0;
-
-      // Fade at end
-      if (t > 0.8) {
-        const dimT = (t - 0.8) / 0.2;
-        mat.opacity = 0.8 * (1 - dimT);
-      }
-    }
-
-    // --- Compass ring fade-in ---
-    if (ringRef.current) {
-      const mat = ringRef.current.material as THREE.MeshPhysicalMaterial;
-      // Ring appears at 50% of timeline
-      const ringT = Math.max(0, Math.min(1, (t - 0.5) / 0.3));
-      mat.opacity = ringT * 0.7;
-
-      // Counter-rotate slightly vs the A
-      ringRef.current.rotation.y = -compassAngle(timeRef.current) * 0.3;
-
-      // Fade at end
-      if (t > 0.85) {
-        const dimT = (t - 0.85) / 0.15;
-        mat.opacity = 0.7 * (1 - dimT);
-      }
-    }
+    elapsedRef.current += delta;
+    const t = elapsedRef.current;
+    const dampedSpeed = 0.15 * Math.exp(-t * 0.3) + 0.05;
+    groupRef.current.rotation.y += dampedSpeed * delta;
   });
 
+  // Sun position: SVG circle at (250, 302) → (0, -0.62)
+  const sunY = -0.62;
+
   return (
-    <group ref={groupRef} position={[0, 2, 20]} scale={[4, 4, 4]}>
-      {/* Crystalline "A" monogram — scaled 4x, positioned near boot camera */}
-      <mesh ref={aRef} geometry={aGeometry} position={[0, 0, -0.15]}>
-        <meshPhysicalMaterial
-          color={COLORS.CYAN_STRUCT}
-          transmission={0}
-          thickness={0.5}
-          roughness={0.1}
-          ior={1.8}
-          envMapIntensity={1.2}
-          transparent
-          opacity={0}
-          toneMapped={false}
-          side={THREE.DoubleSide}
-        />
+    <group ref={groupRef} scale={1.2}>
+      <mesh material={aMaterial} position={[0, 0, -0.25]}>
+        <extrudeGeometry args={[aShape, {
+          depth: 0.5,
+          bevelEnabled: true,
+          bevelThickness: 0.03,
+          bevelSize: 0.02,
+          bevelSegments: 3,
+        }]} />
       </mesh>
 
-      {/* Amber core point light — triggers bloom */}
-      <pointLight
-        ref={coreRef}
-        color={COLORS.AMBER_CORE}
-        intensity={0}
-        distance={20}
-        decay={2}
-      />
-
-      {/* Core halo sphere */}
-      <mesh ref={haloRef}>
-        <sphereGeometry args={[0.25, 24, 24]} />
-        <meshStandardMaterial
-          color={COLORS.AMBER_CORE}
-          emissive={COLORS.AMBER_CORE}
-          emissiveIntensity={0}
-          transparent
-          opacity={0}
-          toneMapped={false}
-        />
+      <mesh material={sunMaterial} position={[0, sunY, 0]}>
+        <sphereGeometry args={[0.55, 32, 32]} />
       </mesh>
 
-      {/* Compass ring — thin torus */}
-      <mesh ref={ringRef} rotation={[Math.PI / 2, 0, 0]}>
-        <torusGeometry args={[1.8, 0.02, 8, 64]} />
-        <meshPhysicalMaterial
-          color={COLORS.CYAN_STRUCT}
-          transmission={0.5}
-          roughness={0.2}
-          ior={1.5}
-          transparent
-          opacity={0}
-          toneMapped={false}
-          emissive={COLORS.CYAN_STRUCT}
-          emissiveIntensity={0.1}
-        />
-      </mesh>
+      <pointLight position={[0, sunY, 0.5]} color="#FF5601" intensity={2 * opacity} distance={8} decay={2} />
+      <pointLight position={[0, sunY, -0.5]} color="#E8A030" intensity={1 * opacity} distance={6} decay={2} />
+      <pointLight position={[0, 1.5, 1]} color="#00CED1" intensity={0.5 * opacity} distance={5} decay={2} />
+    </group>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Main boot sequence — returns null when not active
+// ---------------------------------------------------------------------------
+
+export default function BootSequence3D() {
+  const currentScene = usePortalStore((s) => s.currentScene);
+  const [phase, setPhase] = useState<BootPhase>('black');
+  const opacityRef = useRef({ value: 0 });
+  const [logoOpacity, setLogoOpacity] = useState(0);
+  const particlesRef = useRef<THREE.Points>(null);
+
+  const { particlePositions, particleVelocities } = useMemo(() => {
+    const pos = new Float32Array(PARTICLE_COUNT * 3);
+    const vel = new Float32Array(PARTICLE_COUNT * 3);
+    for (let i = 0; i < PARTICLE_COUNT; i++) {
+      pos[i * 3] = (Math.random() - 0.5) * 1.5;
+      pos[i * 3 + 1] = (Math.random() - 0.5) * 2.0 - 0.5;
+      pos[i * 3 + 2] = (Math.random() - 0.5) * 0.5;
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(2 * Math.random() - 1);
+      const speed = 2 + Math.random() * 4;
+      vel[i * 3] = Math.sin(phi) * Math.cos(theta) * speed;
+      vel[i * 3 + 1] = Math.sin(phi) * Math.sin(theta) * speed;
+      vel[i * 3 + 2] = Math.cos(phi) * speed;
+    }
+    return { particlePositions: pos, particleVelocities: vel };
+  }, []);
+
+  // GSAP timeline drives the boot sequence
+  useEffect(() => {
+    if (currentScene !== 'boot') return;
+
+    setPhase('black');
+    opacityRef.current.value = 0;
+    setLogoOpacity(0);
+
+    const tl = gsap.timeline();
+
+    // Phase 1: Black
+    tl.to({}, { duration: PHASE_BLACK / 1000, onComplete: () => setPhase('resolve') });
+
+    // Phase 2: Resolve — fade in
+    tl.to(opacityRef.current, {
+      value: 1,
+      duration: PHASE_RESOLVE / 1000,
+      ease: 'power2.inOut',
+      onUpdate: () => setLogoOpacity(opacityRef.current.value),
+    });
+
+    // Phase 3: Hold
+    tl.to({}, { duration: PHASE_HOLD / 1000, onComplete: () => setPhase('scatter') });
+
+    // Phase 4: Scatter — fade out + particle burst
+    tl.to(opacityRef.current, {
+      value: 0,
+      duration: PHASE_SCATTER / 1000,
+      ease: 'power2.in',
+      onUpdate: () => setLogoOpacity(opacityRef.current.value),
+    });
+
+    // Transition to gauntlet
+    tl.call(() => {
+      setPhase('done');
+      usePortalStore.getState().setScene('gauntlet');
+    });
+
+    return () => { tl.kill(); };
+  }, [currentScene]);
+
+  // Animate scatter particles
+  useFrame((_, delta) => {
+    if (phase !== 'scatter' || !particlesRef.current) return;
+    const posAttr = particlesRef.current.geometry.getAttribute('position') as THREE.BufferAttribute;
+    const arr = posAttr.array as Float32Array;
+    for (let i = 0; i < PARTICLE_COUNT; i++) {
+      const i3 = i * 3;
+      arr[i3] += particleVelocities[i3] * delta;
+      arr[i3 + 1] += particleVelocities[i3 + 1] * delta;
+      arr[i3 + 2] += particleVelocities[i3 + 2] * delta;
+    }
+    posAttr.needsUpdate = true;
+  });
+
+  // === CONDITIONAL RETURN — completely unmount when not boot ===
+  if (currentScene !== 'boot') return null;
+
+  return (
+    <group>
+      <ambientLight intensity={0.03} color="#0A0E1A" />
+      <AzimuthLogo opacity={logoOpacity} />
+
+      {phase === 'scatter' && (
+        <points ref={particlesRef}>
+          <bufferGeometry>
+            <bufferAttribute
+              attach="attributes-position"
+              args={[particlePositions, 3]}
+            />
+          </bufferGeometry>
+          <pointsMaterial
+            color="#00B4CF"
+            size={0.03}
+            transparent
+            opacity={0.7}
+            blending={THREE.AdditiveBlending}
+            depthWrite={false}
+          />
+        </points>
+      )}
     </group>
   );
 }

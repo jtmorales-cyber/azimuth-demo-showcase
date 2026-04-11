@@ -64,11 +64,11 @@ function v(x: number, y: number, z: number) {
 // ---------------------------------------------------------------------------
 
 export const FLIGHT_SEGMENTS: FlightSegment[] = [
-  // S0: Boot — static origin
+  // S0: Boot — static camera looking at A monogram at origin
   {
     scrollStart: 0.0,
     scrollEnd: 0.05,
-    positions: [v(0, 2, 25), v(0, 2, 24)],
+    positions: [v(0, 0, 5), v(0, 0, 5)],
     lookAts: [v(0, 0, 0), v(0, 0, 0)],
     fovStart: 50,
     fovEnd: 50,
@@ -77,21 +77,23 @@ export const FLIGHT_SEGMENTS: FlightSegment[] = [
     easing: EASING.SCENE_ENTER,
   },
 
-  // S1: Gauntlet drift — tight corridor, dutch angle, slow forward
+  // S1: Gauntlet drift — inside corridor at eye height, dutch angle
+  // Corridor segments start at Z=0 and extend negative Z
+  // Camera drifts forward (negative Z) through the corridor
   {
     scrollStart: 0.05,
     scrollEnd: 0.20,
     positions: [
-      v(0, 1.5, 20),   // corridor entrance
-      v(0.3, 1.5, 10),  // slight lateral drift
-      v(-0.2, 1.5, 0),  // mid-corridor weave
-      v(0, 1.5, -10),   // deep corridor
+      v(0, 0.25, 0),     // corridor entrance, eye height
+      v(0.15, 0.25, -8), // slight lateral drift
+      v(-0.1, 0.25, -16),// mid-corridor weave
+      v(0, 0.25, -25),   // deep corridor
     ],
     lookAts: [
-      v(0, 1.5, 10),
-      v(0, 1.5, 0),
-      v(0, 1.5, -10),
-      v(0, 1.5, -20),
+      v(0, 0.25, -10),
+      v(0, 0.25, -18),
+      v(0, 0.25, -26),
+      v(0, 0.25, -35),
     ],
     fovStart: 55,
     fovEnd: 55,
@@ -100,19 +102,19 @@ export const FLIGHT_SEGMENTS: FlightSegment[] = [
     easing: EASING.SCENE_ENTER,
   },
 
-  // S2: Gauntlet → Hub transition — accelerate forward, dutch recovers, pull up
+  // S2: Gauntlet → Hub transition — accelerate forward, dutch recovers, pull up to hub orbital
   {
     scrollStart: 0.20,
     scrollEnd: 0.30,
     positions: [
-      v(0, 1.5, -10),   // continue from gauntlet end
-      v(0, 2, -20),     // accelerate deeper
-      v(0, 4, -10),     // begin rising
+      v(0, 0.25, -25),  // continue from gauntlet end
+      v(0, 1, -30),     // accelerate + rise
+      v(0, 2, -10),     // pulling up
       v(0, 3, 20),      // arrive at hub orbital
     ],
     lookAts: [
-      v(0, 1.5, -20),
-      v(0, 0, -30),
+      v(0, 0.25, -35),
+      v(0, 0, -40),
       v(0, 0, 0),       // begin looking at NOVA
       v(0, 0, 0),       // locked on NOVA
     ],
