@@ -6,16 +6,18 @@ import * as THREE from 'three';
 import { COLORS, TIMING } from '@/utils/constants';
 import { usePortalStore } from '@/state/portalStore';
 
+import {
+  PARTICLE_COUNT,
+  ORBIT_RADIUS_MAX,
+  ATTRACTION_LERP,
+  initParticles,
+  attractionForce,
+} from './novaParticles';
+
 // ---------------------------------------------------------------------------
 // Config
 // ---------------------------------------------------------------------------
 
-const PARTICLE_COUNT = 15000;
-const ORBIT_RADIUS_MIN = 1.2;
-const ORBIT_RADIUS_MAX = 3.8;
-const PARTICLE_SIZE_MIN = 0.02;
-const PARTICLE_SIZE_MAX = 0.08;
-const ATTRACTION_LERP = 0.07; // slow = premium feel
 const BREATHE_PERIOD = TIMING.GLOW_BREATHE / 1000; // 4s
 
 // ---------------------------------------------------------------------------
@@ -30,63 +32,16 @@ interface NOVASphereProps {
 }
 
 // ---------------------------------------------------------------------------
-// Particle data initialization (CPU-side, runs once)
-// ---------------------------------------------------------------------------
-
-interface ParticleData {
-  orbitRadius: Float32Array;
-  angularVelocity: Float32Array;
-  phaseOffset: Float32Array;
-  orbitTilt: Float32Array;      // tilt angle for orbital plane
-  orbitTiltAxis: Float32Array;  // axis for orbital plane tilt (x, z)
-  baseSize: Float32Array;
-  colorT: Float32Array;         // 0 = amber center, 1 = cyan edge
-}
-
-function initParticles(): ParticleData {
-  const orbitRadius = new Float32Array(PARTICLE_COUNT);
-  const angularVelocity = new Float32Array(PARTICLE_COUNT);
-  const phaseOffset = new Float32Array(PARTICLE_COUNT);
-  const orbitTilt = new Float32Array(PARTICLE_COUNT);
-  const orbitTiltAxis = new Float32Array(PARTICLE_COUNT * 2);
-  const baseSize = new Float32Array(PARTICLE_COUNT);
-  const colorT = new Float32Array(PARTICLE_COUNT);
-
-  for (let i = 0; i < PARTICLE_COUNT; i++) {
-    // Radius: biased toward middle with some near core and some at edges
-    const r = Math.random();
-    orbitRadius[i] = ORBIT_RADIUS_MIN + (ORBIT_RADIUS_MAX - ORBIT_RADIUS_MIN) * (r * r * 0.6 + r * 0.4);
-
-    // Angular velocity: faster near core, slower at edges
-    const normalizedR = (orbitRadius[i] - ORBIT_RADIUS_MIN) / (ORBIT_RADIUS_MAX - ORBIT_RADIUS_MIN);
-    angularVelocity[i] = (0.15 + Math.random() * 0.25) * (1.0 - normalizedR * 0.6);
-
-    phaseOffset[i] = Math.random() * Math.PI * 2;
-
-    // Orbital tilt: creates 3D sphere shape, not just a flat ring
-    orbitTilt[i] = (Math.random() - 0.5) * Math.PI * 0.9; // ±81° tilt
-    orbitTiltAxis[i * 2] = Math.random() * Math.PI * 2;     // tilt axis angle
-    orbitTiltAxis[i * 2 + 1] = (Math.random() - 0.5) * 0.3; // slight vertical bias
-
-    // Size: smaller at edges, larger near core
-    baseSize[i] = PARTICLE_SIZE_MIN + (PARTICLE_SIZE_MAX - PARTICLE_SIZE_MIN) * (1.0 - normalizedR * 0.7) * (0.5 + Math.random() * 0.5);
-
-    // Color gradient: 0 = amber (center), 1 = cyan (edge)
-    colorT[i] = normalizedR;
-  }
-
-  return { orbitRadius, angularVelocity, phaseOffset, orbitTilt, orbitTiltAxis, baseSize, colorT };
-}
-
-// ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
+// Module-level temps — zero per-frame allocations
 const _dummy = new THREE.Object3D();
 const _color = new THREE.Color();
 const _amberColor = new THREE.Color(COLORS.AMBER_CORE);
 const _cyanColor = new THREE.Color(COLORS.CYAN_STRUCT);
-const _attractPos = new THREE.Vector3();
+const _sphereCenter = new THREE.Vector3();
+const _closestPoint = new THREE.Vector3();
 
 export default function NOVASphere({
   state: stateProp,
@@ -137,11 +92,9 @@ export default function NOVASphere({
     // --- Hover attraction target ---
     // Project pointer into 3D space at the sphere's depth
     raycaster.setFromCamera(pointer, camera);
-    const sphereCenter = new THREE.Vector3(...position);
-    const ray = raycaster.ray;
-    const closestPoint = new THREE.Vector3();
-    ray.closestPointToPoint(sphereCenter, closestPoint);
-    attractTarget.current.lerp(closestPoint, ATTRACTION_LERP);
+    _sphereCenter.set(position[0], position[1], position[2]);
+    raycaster.ray.closestPointToPoint(_sphereCenter, _closestPoint);
+    attractTarget.current.lerp(_closestPoint, ATTRACTION_LERP);
 
     // --- Breathing animation on core light ---
     if (coreLightRef.current) {
@@ -181,7 +134,7 @@ export default function NOVASphere({
         const dy = attractTarget.current.y - position[1] - py;
         const dz = attractTarget.current.z - position[2] - pz;
         const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
-        const force = Math.min(0.4, 1.0 / (dist * dist + 0.5));
+        const force = attractionForce(dist);
         px += dx * force * ATTRACTION_LERP;
         py += dy * force * ATTRACTION_LERP;
         pz += dz * force * ATTRACTION_LERP;
@@ -220,7 +173,8 @@ export default function NOVASphere({
     }
 
     mesh.instanceMatrix.needsUpdate = true;
-    if (mesh.instanceColor) {
+    // Only upload color buffer when hover is actively modifying colors
+    if (currentState === 'hover' && mesh.instanceColor) {
       mesh.instanceColor.needsUpdate = true;
     }
   });
