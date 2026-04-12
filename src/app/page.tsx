@@ -6,6 +6,7 @@ import ScrollManager from '@/components/layout/ScrollManager';
 import IdleOverlay from '@/components/ui/IdleOverlay';
 import ScrollProgress from '@/components/ui/ScrollProgress';
 import { useIdleTimeout } from '@/hooks/useIdleTimeout';
+import { useKioskMode } from '@/hooks/useKioskMode';
 
 // R3F canvas — client-only, no SSR
 const Scene = dynamic(() => import('@/components/three/Scene'), { ssr: false });
@@ -24,6 +25,8 @@ const ImpactWall = dynamic(() => import('@/scenes/ImpactWall'), { ssr: false });
 const ClosingCTA = dynamic(() => import('@/scenes/ClosingCTA'), { ssr: false });
 
 export default function Home() {
+  // Kiosk mode: fullscreen + audio unlock + cursor hiding on first touch
+  useKioskMode();
   // Kiosk idle reset — 60s inactivity → fade to black → restart at boot
   useIdleTimeout();
 

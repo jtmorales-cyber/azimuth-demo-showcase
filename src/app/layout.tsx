@@ -21,13 +21,28 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  // iPad safe area coverage — extends under notch/dynamic island
+  viewportFit: 'cover',
+  // Match dark theme immediately on initial paint
+  themeColor: '#0A0E1A',
 };
 
 export const metadata: Metadata = {
   title: 'Azimuth Mission Mentor — Interactive Demo',
-  description: 'AI-powered veteran career lifecycle platform. One platform. Complete coverage. AI that serves those who served.',
+  description:
+    'AI-powered veteran career lifecycle platform. One platform. Complete coverage. AI that serves those who served.',
+  // Kiosk-specific meta tags
   other: {
+    // Allow PWA fullscreen on iOS home screen
     'apple-mobile-web-app-capable': 'yes',
+    // Status bar matches dark background
+    'apple-mobile-web-app-status-bar-style': 'black-translucent',
+    // Prevent iOS from auto-linking phone numbers, addresses, emails
+    'format-detection': 'telephone=no, date=no, address=no, email=no',
+    // Title shown when added to iOS home screen
+    'apple-mobile-web-app-title': 'Azimuth',
+    // Android fullscreen hint
+    'mobile-web-app-capable': 'yes',
   },
 };
 
