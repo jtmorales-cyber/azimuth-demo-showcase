@@ -104,11 +104,29 @@ export default function Scene() {
       {/* DEPTH GRID: internal scene visibility check */}
       <DepthGrid opacity={0.22} color="#00CED1" />
 
-      <EffectComposer>
-        <Bloom luminanceThreshold={0.6} luminanceSmoothing={0.3} intensity={0.8} />
-        <Vignette darkness={0.4} offset={0.3} />
-        <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
-      </EffectComposer>
+      <DynamicPostprocessing />
     </Canvas>
   );
 }
+
+/**
+ * Postprocessing wrapper that boosts bloom intensity during the Impact Wall
+ * scene for the visual crescendo effect.
+ */
+function DynamicPostprocessing() {
+  const currentScene = usePortalStore((s) => s.currentScene);
+  const bloomIntensity = currentScene === 'impact' ? 1.4 : 0.8;
+
+  return (
+    <EffectComposer>
+      <Bloom
+        luminanceThreshold={0.6}
+        luminanceSmoothing={0.3}
+        intensity={bloomIntensity}
+      />
+      <Vignette darkness={0.4} offset={0.3} />
+      <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
+    </EffectComposer>
+  );
+}
+

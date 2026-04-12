@@ -7,6 +7,8 @@ interface MetricCardProps {
   label: string;
   prefix?: string;
   suffix?: string;
+  /** Stagger delay in ms before counter animation starts */
+  delay?: number;
 }
 
 /**
@@ -15,7 +17,7 @@ interface MetricCardProps {
  * Uses Space Grotesk 600 for the number, Inter for the label.
  * WCAG: amber-core on glass panel = 7.1:1 AAA.
  */
-export default function MetricCard({ value, label, prefix = '', suffix = '' }: MetricCardProps) {
+export default function MetricCard({ value, label, prefix = '', suffix = '', delay = 0 }: MetricCardProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [displayValue, setDisplayValue] = useState('0');
   const [hasAnimated, setHasAnimated] = useState(false);
@@ -28,7 +30,11 @@ export default function MetricCard({ value, label, prefix = '', suffix = '' }: M
       ([entry]) => {
         if (entry.isIntersecting && !hasAnimated) {
           setHasAnimated(true);
-          animateCounter();
+          if (delay > 0) {
+            setTimeout(animateCounter, delay);
+          } else {
+            animateCounter();
+          }
         }
       },
       { threshold: 0.5 }
