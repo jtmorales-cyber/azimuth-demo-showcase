@@ -20,7 +20,12 @@ export default function NOVANarration({ text, typing = true }: NOVANarrationProp
   const indexRef = useRef(0);
 
   useEffect(() => {
-    if (!typing) {
+    // Respect prefers-reduced-motion — show full text immediately
+    const prefersReducedMotion =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (!typing || prefersReducedMotion) {
       setDisplayed(text);
       setIsComplete(true);
       return;
@@ -65,6 +70,8 @@ export default function NOVANarration({ text, typing = true }: NOVANarrationProp
       {/* Narration text — blockquote style */}
       <blockquote
         className="font-space-grotesk"
+        aria-live="polite"
+        aria-label={text}
         style={{
           fontWeight: 300,
           fontSize: 'var(--text-body)',
