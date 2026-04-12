@@ -65,7 +65,7 @@ export default function KITShowcase() {
               </p>
               <MetricCard
                 value="15+"
-                label="disconnected systems the average service member uses to manage their career"
+                label="disconnected systems the average service member uses to manage their life and career"
               />
             </div>
           </GlassPanel>
@@ -87,7 +87,7 @@ export default function KITShowcase() {
                   color: 'var(--peak-light)',
                 }}
               >
-                K.I.T. Puts Your Entire Career in One Place
+                KIT Puts Your Entire Career in One Place
               </h2>
               <p
                 className="font-inter"
@@ -131,16 +131,16 @@ export default function KITShowcase() {
               </h2>
               <div className="grid grid-cols-1 gap-md pt-sm">
                 <MetricCard
-                  value="1"
-                  label="dashboard for entire career"
+                  value="One dashboard"
+                  label="for entire career"
                 />
                 <MetricCard
-                  value="24/7"
-                  label="proactive alerts for promotion windows and expiring certs"
+                  value="Proactive alerts"
+                  label="for promotion windows and expiring certs"
                 />
                 <MetricCard
-                  value="100%"
-                  label="career trajectory mapped against peer benchmarks"
+                  value="Career trajectory"
+                  label="mapped against peer benchmarks"
                 />
               </div>
             </div>
@@ -156,7 +156,7 @@ export default function KITShowcase() {
                 NOVA&#39;s Take
               </div>
               <NOVANarration
-                text="The military has a phrase for what K.I.T. solves: 'nobody told me.' How many careers stalled because someone missed a deadline they didn't know existed? K.I.T. makes sure that's never you."
+                text="The military has a phrase for what KIT solves: 'nobody told me.' How many careers stalled because someone missed an opportunity they didn't know existed? KIT makes sure that's never you."
                 typing
               />
             </div>
