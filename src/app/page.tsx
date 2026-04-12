@@ -3,6 +3,8 @@
 import dynamic from 'next/dynamic';
 import ScrollScene from '@/components/layout/ScrollScene';
 import ScrollManager from '@/components/layout/ScrollManager';
+import IdleOverlay from '@/components/ui/IdleOverlay';
+import { useIdleTimeout } from '@/hooks/useIdleTimeout';
 
 // R3F canvas — client-only, no SSR
 const Scene = dynamic(() => import('@/components/three/Scene'), { ssr: false });
@@ -21,12 +23,18 @@ const ImpactWall = dynamic(() => import('@/scenes/ImpactWall'), { ssr: false });
 const ClosingCTA = dynamic(() => import('@/scenes/ClosingCTA'), { ssr: false });
 
 export default function Home() {
+  // Kiosk idle reset — 60s inactivity → fade to black → restart at boot
+  useIdleTimeout();
+
   return (
     <>
       {/* Fixed full-viewport 3D canvas — sits behind scroll content */}
       <div className="fixed inset-0 z-0">
         <Scene />
       </div>
+
+      {/* Kiosk idle fade overlay — CSS-only black curtain */}
+      <IdleOverlay />
 
       {/* Scrollytelling sections — transparent, overlaid on the canvas */}
       <div className="relative z-10">
