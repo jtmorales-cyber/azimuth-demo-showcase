@@ -125,16 +125,17 @@ export default function MAPSShowcase() {
               </h2>
               <div className="grid grid-cols-1 gap-md pt-sm">
                 <MetricCard
-                  value="Aptitude match"
-                  label="score provided before enlistment"
+                  value="200+"
+                  label="military occupations mapped across all six branches"
                 />
                 <MetricCard
-                  value="5/10/20 yr"
-                  label="career path visibility across horizons"
+                  value="10"
+                  suffix=" Year"
+                  label="civilian career horizon modeled before enlistment"
                 />
                 <MetricCard
-                  value="Branch comparison"
-                  label="data for informed decisions"
+                  value="1"
+                  label="Unified view of aptitude, lifestyle, and post-service fit"
                 />
               </div>
             </div>
