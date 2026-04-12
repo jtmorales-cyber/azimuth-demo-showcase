@@ -8,8 +8,10 @@ import {
   Bloom,
   Vignette,
   ToneMapping,
+  ChromaticAberration,
 } from '@react-three/postprocessing';
-import { ToneMappingMode } from 'postprocessing';
+import { ToneMappingMode, BlendFunction, ChromaticAberrationEffect } from 'postprocessing';
+import { Vector2 } from 'three';
 import SceneGroup from './SceneGroup';
 import BootSequence3D from './BootSequence3D';
 import DepthGrid from './DepthGrid';
@@ -110,9 +112,62 @@ export default function Scene() {
 }
 
 /**
- * Postprocessing wrapper that boosts bloom intensity during the Impact Wall
- * scene for the visual crescendo effect.
+ * Postprocessing stack (design-system.md §6.4):
+ *   - Bloom (radius 1.2, intensity 0.8 default, 1.4 during Impact Wall)
+ *   - ChromaticAberration (base offset 0.001, ramps to 0.003 during dissolve)
+ *   - Vignette (darkness 0.4, offset 0.3)
+ *   - ToneMapping (ACES Filmic)
+ *
+ * ChromaticAberration is driven by a useFrame hook that reads scroll progress
+ * from the store and mutates the effect's offset directly — avoids React
+ * re-renders on every frame while still tracking the scroll-driven transition.
  */
+
+// Stable Vector2 instances for base/peak offsets
+const ABERRATION_BASE = new Vector2(0.001, 0.001);
+const ABERRATION_PEAK = new Vector2(0.003, 0.003);
+
+// Dissolve transition scroll range (matches DissolveTransition constants)
+const DISSOLVE_START = 0.15;
+const DISSOLVE_END = 0.30;
+
+function ChromaticAberrationDynamic() {
+  // drei types the ref as `typeof ChromaticAberrationEffect` but the runtime
+  // value is the instance — use `any` and assert the known shape on access.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const aberrationRef = useRef<any>(null);
+
+  useFrame(() => {
+    const effect = aberrationRef.current as ChromaticAberrationEffect | null;
+    if (!effect) return;
+
+    const scroll = usePortalStore.getState().scrollProgress;
+
+    // Triangle-wave envelope: 0 outside range, peaks at midpoint of dissolve
+    let t = 0;
+    if (scroll >= DISSOLVE_START && scroll <= DISSOLVE_END) {
+      const localT = (scroll - DISSOLVE_START) / (DISSOLVE_END - DISSOLVE_START);
+      // Peak at 0.5 (midpoint), fall off to edges
+      t = 1 - Math.abs(localT * 2 - 1);
+    }
+
+    // Lerp between base and peak offsets
+    const x = ABERRATION_BASE.x + (ABERRATION_PEAK.x - ABERRATION_BASE.x) * t;
+    const y = ABERRATION_BASE.y + (ABERRATION_PEAK.y - ABERRATION_BASE.y) * t;
+    effect.offset.set(x, y);
+  });
+
+  return (
+    <ChromaticAberration
+      ref={aberrationRef}
+      blendFunction={BlendFunction.NORMAL}
+      offset={ABERRATION_BASE}
+      radialModulation={false}
+      modulationOffset={0}
+    />
+  );
+}
+
 function DynamicPostprocessing() {
   const currentScene = usePortalStore((s) => s.currentScene);
   const bloomIntensity = currentScene === 'impact' ? 1.4 : 0.8;
@@ -123,7 +178,9 @@ function DynamicPostprocessing() {
         luminanceThreshold={0.6}
         luminanceSmoothing={0.3}
         intensity={bloomIntensity}
+        radius={1.2}
       />
+      <ChromaticAberrationDynamic />
       <Vignette darkness={0.4} offset={0.3} />
       <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
     </EffectComposer>
