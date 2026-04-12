@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic';
 import ScrollScene from '@/components/layout/ScrollScene';
 import ScrollManager from '@/components/layout/ScrollManager';
 import IdleOverlay from '@/components/ui/IdleOverlay';
+import ScrollProgress from '@/components/ui/ScrollProgress';
 import { useIdleTimeout } from '@/hooks/useIdleTimeout';
 
 // R3F canvas — client-only, no SSR
@@ -35,6 +36,9 @@ export default function Home() {
 
       {/* Kiosk idle fade overlay — CSS-only black curtain */}
       <IdleOverlay />
+
+      {/* Vertical scroll progress indicator on the right edge */}
+      <ScrollProgress />
 
       {/* Scrollytelling sections — transparent, overlaid on the canvas */}
       <div className="relative z-10">
