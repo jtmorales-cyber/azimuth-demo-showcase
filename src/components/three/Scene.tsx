@@ -123,9 +123,11 @@ export default function Scene() {
  * re-renders on every frame while still tracking the scroll-driven transition.
  */
 
-// Stable Vector2 instances for base/peak offsets
-const ABERRATION_BASE = new Vector2(0.001, 0.001);
-const ABERRATION_PEAK = new Vector2(0.003, 0.003);
+// Chromatic aberration disabled — sharp image preferred over lens fringing.
+// Both vectors zeroed so the effect is a no-op. To re-enable, restore
+// BASE to (0.001, 0.001) and PEAK to (0.003, 0.003).
+const ABERRATION_BASE = new Vector2(0, 0);
+const ABERRATION_PEAK = new Vector2(0, 0);
 
 // Dissolve transition scroll range (matches DissolveTransition constants)
 const DISSOLVE_START = 0.15;
