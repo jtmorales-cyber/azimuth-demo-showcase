@@ -72,19 +72,44 @@ export interface PortalState {
 }
 
 // ---------------------------------------------------------------------------
-// Scroll position → scene mapping (design-system.md Section 4.3)
+// Scroll position → scene mapping
+// ---------------------------------------------------------------------------
+// The page has 11 <ScrollScene> sections, each pinned for 100vh of scroll.
+// Total scroll = 11 × 100vh, each section = 1/11 ≈ 0.0909 of total scroll.
+//
+// The earlier hand-tuned ranges from design-system.md §4.3 did NOT match the
+// actual DOM layout, causing showcase scenes and the Impact Wall to render
+// at wrong scroll positions or skip entirely. Ranges below are computed from
+// the actual section order in src/app/page.tsx.
+//
+// Section order:
+//   0: boot               (0.000-0.091)
+//   1: gauntlet           (0.091-0.182)
+//   2: gauntlet-transition (0.182-0.273) → still reads as gauntlet scene
+//   3: hub                (0.273-0.364)
+//   4: lifecycle          (0.364-0.455) → still reads as hub scene
+//   5: maps               (0.455-0.545)
+//   6: kit                (0.545-0.636)
+//   7: base               (0.636-0.727)
+//   8: scout              (0.727-0.818)
+//   9: impact             (0.818-0.909)
+//  10: closing            (0.909-1.000)
 // ---------------------------------------------------------------------------
 
+const SECTION_SIZE = 1 / 11;
+
 const SCROLL_SCENE_RANGES: Array<{ min: number; max: number; scene: SceneName }> = [
-  { min: 0.00, max: 0.05, scene: 'boot' },
-  { min: 0.05, max: 0.20, scene: 'gauntlet' },
-  { min: 0.20, max: 0.45, scene: 'hub' },
-  { min: 0.45, max: 0.56, scene: 'maps' },
-  { min: 0.56, max: 0.67, scene: 'kit' },
-  { min: 0.67, max: 0.78, scene: 'base' },
-  { min: 0.78, max: 0.89, scene: 'scout' },
-  { min: 0.89, max: 0.95, scene: 'impact' },
-  { min: 0.95, max: 1.00, scene: 'closing' },
+  { min: 0 * SECTION_SIZE,  max: 1 * SECTION_SIZE,  scene: 'boot' },
+  // gauntlet section + transition section both map to 'gauntlet' scene
+  { min: 1 * SECTION_SIZE,  max: 3 * SECTION_SIZE,  scene: 'gauntlet' },
+  // hub section + lifecycle section both map to 'hub' scene
+  { min: 3 * SECTION_SIZE,  max: 5 * SECTION_SIZE,  scene: 'hub' },
+  { min: 5 * SECTION_SIZE,  max: 6 * SECTION_SIZE,  scene: 'maps' },
+  { min: 6 * SECTION_SIZE,  max: 7 * SECTION_SIZE,  scene: 'kit' },
+  { min: 7 * SECTION_SIZE,  max: 8 * SECTION_SIZE,  scene: 'base' },
+  { min: 8 * SECTION_SIZE,  max: 9 * SECTION_SIZE,  scene: 'scout' },
+  { min: 9 * SECTION_SIZE,  max: 10 * SECTION_SIZE, scene: 'impact' },
+  { min: 10 * SECTION_SIZE, max: 1.0001,            scene: 'closing' },
 ];
 
 export function sceneFromScroll(progress: number): SceneName {
