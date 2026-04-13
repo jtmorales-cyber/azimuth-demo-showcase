@@ -74,7 +74,7 @@ export default function SCOUTShowcase() {
 
   return (
     <div
-      className="absolute inset-0 z-20 flex items-center justify-center pointer-events-auto"
+      className="fixed inset-0 z-20 flex items-center justify-center pointer-events-auto"
       style={{ touchAction: 'pan-y' }}
     >
       <div className="w-full max-w-2xl px-lg">

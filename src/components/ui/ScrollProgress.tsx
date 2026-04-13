@@ -22,16 +22,18 @@ interface SceneMarker {
   position: number;
 }
 
-// Labels to display — matches task spec (Boot and Closing are omitted
-// from the visible markers; the bar covers the full journey regardless)
+// Labels to display — positioned at midpoints of the 1/11 scroll slices.
+// Boot and Closing are intentionally omitted from visible markers.
+// Section index mapping: gauntlet=1, hub=3-4, maps=5, kit=6, base=7, scout=8, impact=9
+const S = 1 / 11;
 const MARKERS: SceneMarker[] = [
-  { scene: 'gauntlet', label: 'Gauntlet', position: 0.125 },
-  { scene: 'hub',      label: 'Hub',      position: 0.275 },
-  { scene: 'maps',     label: 'MAPS',     position: 0.505 },
-  { scene: 'kit',      label: 'K.I.T.',   position: 0.615 },
-  { scene: 'base',     label: 'BASE',     position: 0.725 },
-  { scene: 'scout',    label: 'SCOUT',    position: 0.835 },
-  { scene: 'impact',   label: 'Impact',   position: 0.92 },
+  { scene: 'gauntlet', label: 'Gauntlet', position: 1.5 * S }, // section 1 mid (~0.136)
+  { scene: 'hub',      label: 'Hub',      position: 3.5 * S }, // section 3 mid (~0.318)
+  { scene: 'maps',     label: 'MAPS',     position: 5.5 * S }, // section 5 mid (~0.500)
+  { scene: 'kit',      label: 'K.I.T.',   position: 6.5 * S }, // section 6 mid (~0.591)
+  { scene: 'base',     label: 'BASE',     position: 7.5 * S }, // section 7 mid (~0.682)
+  { scene: 'scout',    label: 'SCOUT',    position: 8.5 * S }, // section 8 mid (~0.773)
+  { scene: 'impact',   label: 'Impact',   position: 9.5 * S }, // section 9 mid (~0.864)
 ];
 
 const AUTO_HIDE_MS = 3000;

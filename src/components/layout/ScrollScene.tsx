@@ -1,15 +1,29 @@
 'use client';
 
-import { useEffect, useRef, type ReactNode } from 'react';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { type ReactNode } from 'react';
 
-gsap.registerPlugin(ScrollTrigger);
-
+/**
+ * Scroll section container — 100vh block that consumes scroll distance.
+ *
+ * This component no longer uses GSAP ScrollTrigger or pinning. The previous
+ * per-section `pin: true + scrub: true` architecture conflicted with the
+ * global scroll progress tracker in ScrollManager and caused:
+ *   - Scroll feeling locked and discrete instead of smooth
+ *   - Scene overlay mount/unmount thrashing at pin boundaries
+ *   - Touch gesture conflicts (pinned section ate vertical scroll)
+ *
+ * New architecture:
+ *   - Each section is a simple 100vh <section> that scrolls normally
+ *   - ScrollManager tracks global document scroll → portal store scrollProgress
+ *   - Scene overlays render `position: fixed` while their scene is active
+ *   - Camera flies smoothly through flight paths keyed to global scroll
+ *
+ * The `pin` prop is accepted for backwards compatibility but ignored.
+ */
 interface ScrollSceneProps {
   id: string;
   children: ReactNode;
-  onProgress?: (progress: number) => void;
+  /** @deprecated pinning removed — prop is ignored */
   pin?: boolean;
   className?: string;
 }
@@ -17,38 +31,14 @@ interface ScrollSceneProps {
 export default function ScrollScene({
   id,
   children,
-  onProgress,
-  pin = true,
   className = '',
 }: ScrollSceneProps) {
-  const sectionRef = useRef<HTMLElement>(null);
-
-  useEffect(() => {
-    const el = sectionRef.current;
-    if (!el) return;
-
-    const trigger = ScrollTrigger.create({
-      trigger: el,
-      start: 'top top',
-      end: 'bottom top',
-      pin,
-      scrub: true,
-      onUpdate: (self) => {
-        onProgress?.(self.progress);
-      },
-    });
-
-    return () => {
-      trigger.kill();
-    };
-  }, [pin, onProgress]);
-
   return (
     <section
-      ref={sectionRef}
       id={id}
-      className={`relative w-full h-screen overflow-hidden ${className}`}
       data-scene={id}
+      className={`relative w-full h-screen ${className}`}
+      style={{ scrollSnapAlign: 'start' }}
     >
       {children}
     </section>

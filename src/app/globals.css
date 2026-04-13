@@ -78,9 +78,22 @@ body {
 html {
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE/Edge */
+  /* Proximity snap: snaps to sections near boundaries but allows dwell in between.
+     Uses proximity (not mandatory) so the camera can smoothly interpolate between
+     scenes without feeling "stuck" at each section. */
+  scroll-snap-type: y proximity;
+  /* Smooth native scroll for trackpad/mouse wheel on Surface Pro */
+  scroll-behavior: smooth;
 }
 html::-webkit-scrollbar {
   display: none; /* Chrome/Safari */
+}
+
+/* Respect reduced-motion: disable smooth scroll */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
 }
 
 /* Kiosk body: hide cursor entirely. Remove .kiosk class for dev mode. */

@@ -43,7 +43,7 @@ export default function ImpactWall() {
   if (currentScene !== 'impact') return null;
 
   return (
-    <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none">
+    <div className="fixed inset-0 z-20 flex items-center justify-center pointer-events-none">
       <div className="w-full max-w-5xl px-lg flex flex-col items-center gap-xl">
         {/* Section headline — fades in first */}
         <motion.h2

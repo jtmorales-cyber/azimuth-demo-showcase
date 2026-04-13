@@ -28,7 +28,7 @@ export default function ClosingCTA() {
   if (currentScene !== 'closing') return null;
 
   return (
-    <div className="absolute inset-0 z-20 pointer-events-none">
+    <div className="fixed inset-0 z-20 pointer-events-none">
       {/* ═══════════════════════════════════════════════════════════
           Main composition — asymmetric, left-anchored
           ═══════════════════════════════════════════════════════════ */}

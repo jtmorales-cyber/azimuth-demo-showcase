@@ -60,14 +60,33 @@ function v(x: number, y: number, z: number) {
 }
 
 // ---------------------------------------------------------------------------
-// Flight segments
+// Flight segments — aligned to equal 1/11 scroll slices
+// ---------------------------------------------------------------------------
+// The page has 11 <ScrollScene> sections, each consuming 1/11 of total scroll.
+// Every segment here matches the corresponding section's scroll range so the
+// camera is at the correct position for the currentScene derived by the store.
+//
+// Section index → scroll range → flight behavior:
+//   0: boot               (0.000–0.091) → static boot camera
+//   1: gauntlet           (0.091–0.182) → corridor drift
+//   2: gauntlet-transition (0.182–0.273) → dissolve + accelerate
+//   3: hub                (0.273–0.364) → arrive at hub orbital
+//   4: lifecycle          (0.364–0.455) → hub overview
+//   5: maps               (0.455–0.545) → fly toward dodecahedron
+//   6: kit                (0.545–0.636) → fly toward cube
+//   7: base               (0.636–0.727) → fly toward sphere
+//   8: scout              (0.727–0.818) → fly toward octahedron
+//   9: impact             (0.818–0.909) → pull back to hub overview
+//  10: closing            (0.909–1.000) → settle at hub
 // ---------------------------------------------------------------------------
 
+const S = 1 / 11; // section size in scroll units
+
 export const FLIGHT_SEGMENTS: FlightSegment[] = [
-  // S0: Boot — static camera looking at A monogram at origin
+  // Section 0: Boot — static camera looking at A monogram at origin
   {
-    scrollStart: 0.0,
-    scrollEnd: 0.05,
+    scrollStart: 0 * S,
+    scrollEnd: 1 * S,
     positions: [v(0, 0, 5), v(0, 0, 5)],
     lookAts: [v(0, 0, 0), v(0, 0, 0)],
     fovStart: 50,
@@ -77,71 +96,82 @@ export const FLIGHT_SEGMENTS: FlightSegment[] = [
     easing: EASING.SCENE_ENTER,
   },
 
-  // S1: Gauntlet drift — inside corridor at eye height, dutch angle
-  // Corridor segments start at Z=0 and extend negative Z
-  // Camera drifts forward (negative Z) through the corridor
+  // Section 1: Gauntlet drift — inside corridor at eye height, dutch angle
   {
-    scrollStart: 0.05,
-    scrollEnd: 0.20,
+    scrollStart: 1 * S,
+    scrollEnd: 2 * S,
     positions: [
-      v(0, 0.25, 0),     // corridor entrance, eye height
-      v(0.15, 0.25, -8), // slight lateral drift
-      v(-0.1, 0.25, -16),// mid-corridor weave
-      v(0, 0.25, -25),   // deep corridor
+      v(0, 0.25, 0),      // corridor entrance
+      v(0.15, 0.25, -8),  // slight lateral drift
+      v(-0.1, 0.25, -16), // mid-corridor weave
+      v(0, 0.25, -22),    // deep corridor
     ],
     lookAts: [
       v(0, 0.25, -10),
       v(0, 0.25, -18),
       v(0, 0.25, -26),
-      v(0, 0.25, -35),
+      v(0, 0.25, -32),
     ],
     fovStart: 55,
     fovEnd: 55,
-    rollStart: 0.04,   // ~2.3° dutch angle
+    rollStart: 0.04, // ~2.3° dutch angle
     rollEnd: 0.04,
     easing: EASING.SCENE_ENTER,
   },
 
-  // S2: Gauntlet → Hub transition — accelerate forward, dutch recovers, pull up to hub orbital
+  // Section 2: Gauntlet → Hub transition — accelerate + rise
   {
-    scrollStart: 0.20,
-    scrollEnd: 0.30,
+    scrollStart: 2 * S,
+    scrollEnd: 3 * S,
     positions: [
-      v(0, 0.25, -25),  // continue from gauntlet end
-      v(0, 1, -30),     // accelerate + rise
+      v(0, 0.25, -22),  // continue from gauntlet end
+      v(0, 1, -28),     // accelerate forward
       v(0, 2, -10),     // pulling up
       v(0, 3, 20),      // arrive at hub orbital
     ],
     lookAts: [
-      v(0, 0.25, -35),
-      v(0, 0, -40),
-      v(0, 0, 0),       // begin looking at NOVA
-      v(0, 0, 0),       // locked on NOVA
+      v(0, 0.25, -32),
+      v(0, 0, -38),
+      v(0, 0, 0),
+      v(0, 0, 0),
     ],
     fovStart: 55,
     fovEnd: 50,
     rollStart: 0.04,
-    rollEnd: 0,          // dutch angle recovers
-    easing: EASING.SCENE_ENTER,  // power3.inOut
+    rollEnd: 0,
+    easing: EASING.SCENE_ENTER,
   },
 
-  // S3: Hub — gentle hover, looking at NOVA
+  // Section 3: Hub — gentle hover toward NOVA
   {
-    scrollStart: 0.30,
-    scrollEnd: 0.45,
-    positions: [HUB_CAM.clone(), v(0, 3.5, 18)],
+    scrollStart: 3 * S,
+    scrollEnd: 4 * S,
+    positions: [HUB_CAM.clone(), v(0, 3.2, 19)],
     lookAts: [HUB_LOOK.clone(), HUB_LOOK.clone()],
     fovStart: 50,
     fovEnd: 50,
     rollStart: 0,
     rollEnd: 0,
-    easing: EASING.CAMERA_ORBIT,  // sine.inOut
+    easing: EASING.CAMERA_ORBIT,
   },
 
-  // S5: MAPS showcase — fly toward dodecahedron
+  // Section 4: Lifecycle overview — slow orbit around NOVA
   {
-    scrollStart: 0.45,
-    scrollEnd: 0.56,
+    scrollStart: 4 * S,
+    scrollEnd: 5 * S,
+    positions: [v(0, 3.2, 19), v(3, 3.5, 17), v(0, 3.5, 18)],
+    lookAts: [HUB_LOOK.clone(), HUB_LOOK.clone(), HUB_LOOK.clone()],
+    fovStart: 50,
+    fovEnd: 50,
+    rollStart: 0,
+    rollEnd: 0,
+    easing: EASING.CAMERA_ORBIT,
+  },
+
+  // Section 5: MAPS — fly toward dodecahedron
+  {
+    scrollStart: 5 * S,
+    scrollEnd: 6 * S,
     positions: [
       v(0, 3.5, 18),
       v(4, 2.5, 12),
@@ -156,13 +186,13 @@ export const FLIGHT_SEGMENTS: FlightSegment[] = [
     fovEnd: 50,
     rollStart: 0,
     rollEnd: 0,
-    easing: EASING.CAMERA_APPROACH,  // expo.inOut
+    easing: EASING.CAMERA_APPROACH,
   },
 
-  // S6: K.I.T. showcase — fly toward cube
+  // Section 6: K.I.T. — fly toward cube
   {
-    scrollStart: 0.56,
-    scrollEnd: 0.67,
+    scrollStart: 6 * S,
+    scrollEnd: 7 * S,
     positions: [
       nodeApproachCam(NODE_POSITIONS.maps),
       v(4, 2.5, 6),
@@ -180,10 +210,10 @@ export const FLIGHT_SEGMENTS: FlightSegment[] = [
     easing: EASING.CAMERA_APPROACH,
   },
 
-  // S7: BASE showcase — fly toward sphere
+  // Section 7: BASE — fly toward sphere
   {
-    scrollStart: 0.67,
-    scrollEnd: 0.78,
+    scrollStart: 7 * S,
+    scrollEnd: 8 * S,
     positions: [
       nodeApproachCam(NODE_POSITIONS.kit),
       v(-4, 2.5, 6),
@@ -201,10 +231,10 @@ export const FLIGHT_SEGMENTS: FlightSegment[] = [
     easing: EASING.CAMERA_APPROACH,
   },
 
-  // S8: SCOUT showcase — fly toward octahedron
+  // Section 8: SCOUT — fly toward octahedron
   {
-    scrollStart: 0.78,
-    scrollEnd: 0.89,
+    scrollStart: 8 * S,
+    scrollEnd: 9 * S,
     positions: [
       nodeApproachCam(NODE_POSITIONS.base),
       v(-4, 2.5, -6),
@@ -222,10 +252,10 @@ export const FLIGHT_SEGMENTS: FlightSegment[] = [
     easing: EASING.CAMERA_APPROACH,
   },
 
-  // S9–S10: Impact + Closing — return to hub overview
+  // Section 9: Impact Wall — pull back to hub overview
   {
-    scrollStart: 0.89,
-    scrollEnd: 1.0,
+    scrollStart: 9 * S,
+    scrollEnd: 10 * S,
     positions: [
       nodeApproachCam(NODE_POSITIONS.scout),
       v(0, 4, 10),
@@ -236,6 +266,19 @@ export const FLIGHT_SEGMENTS: FlightSegment[] = [
       HUB_LOOK.clone(),
       HUB_LOOK.clone(),
     ],
+    fovStart: 50,
+    fovEnd: 50,
+    rollStart: 0,
+    rollEnd: 0,
+    easing: EASING.CAMERA_PULL_BACK,
+  },
+
+  // Section 10: Closing CTA — settle at hub
+  {
+    scrollStart: 10 * S,
+    scrollEnd: 1.0001,
+    positions: [HUB_CAM.clone(), HUB_CAM.clone()],
+    lookAts: [HUB_LOOK.clone(), HUB_LOOK.clone()],
     fovStart: 50,
     fovEnd: 50,
     rollStart: 0,
