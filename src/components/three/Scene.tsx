@@ -57,16 +57,20 @@ function HubWorld() {
       <CompassRing radius={8} activeNode={hoveredNode} />
       <ToolNode geometry="dodeca" color={COLORS.AMBER_CORE} label="MAPS" subtitle="Pre-Enlistment"
         position={[NODE_POSITIONS.maps.x, NODE_POSITIONS.maps.y, NODE_POSITIONS.maps.z]}
-        onSelect={() => selectNode('maps')} isActive={currentScene === 'maps'} />
+        onSelect={() => selectNode('maps')} isActive={currentScene === 'maps'}
+        rotationAxis="y" />
       <ToolNode geometry="cube" color={COLORS.CYAN_STRUCT} label="K.I.T." subtitle="Active Duty"
         position={[NODE_POSITIONS.kit.x, NODE_POSITIONS.kit.y, NODE_POSITIONS.kit.z]}
-        onSelect={() => selectNode('kit')} isActive={currentScene === 'kit'} />
+        onSelect={() => selectNode('kit')} isActive={currentScene === 'kit'}
+        rotationAxis="xy" />
       <ToolNode geometry="sphere" color={COLORS.CALM_PURPLE} label="BASE" subtitle="Wellness"
         position={[NODE_POSITIONS.base.x, NODE_POSITIONS.base.y, NODE_POSITIONS.base.z]}
-        onSelect={() => selectNode('base')} isActive={currentScene === 'base'} />
+        onSelect={() => selectNode('base')} isActive={currentScene === 'base'}
+        rotationAxis="none" />
       <ToolNode geometry="octa" color={COLORS.SCOUT_BLUE} label="SCOUT" subtitle="Claims"
         position={[NODE_POSITIONS.scout.x, NODE_POSITIONS.scout.y, NODE_POSITIONS.scout.z]}
-        onSelect={() => selectNode('scout')} isActive={currentScene === 'scout'} />
+        onSelect={() => selectNode('scout')} isActive={currentScene === 'scout'}
+        rotationAxis="yz" />
     </SceneGroup>
   );
 }

@@ -65,13 +65,42 @@ export default function ClosingCTA() {
           "
         </motion.div>
 
-        {/* Text column — headline, eyebrow, body */}
-        <div className="flex flex-col gap-lg">
+        {/* Text column wrapped in glass panel — quote mark stays outside
+             the panel to preserve editorial tension */}
+        <motion.div
+          initial={{ opacity: 0, y: 16, scale: 0.97 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.9, delay: 0.15, ease: REVEAL_EASE }}
+          className="relative rounded-2xl flex flex-col gap-lg"
+          style={{
+            background: 'var(--glass-bg)',
+            border: '1px solid var(--glass-border)',
+            backdropFilter: 'blur(var(--glass-blur))',
+            WebkitBackdropFilter: 'blur(var(--glass-blur))',
+            boxShadow:
+              'inset 0 1px 0 0 var(--glass-highlight), 0 0 80px 0 rgba(232, 160, 48, 0.1)',
+            padding: 'clamp(32px, 4vw, 56px)',
+          }}
+        >
+          {/* Amber bottom accent — echoes "In The Arena" amber split headline */}
+          <div
+            aria-hidden="true"
+            style={{
+              position: 'absolute',
+              left: '10%',
+              right: '10%',
+              bottom: 0,
+              height: 1,
+              background:
+                'linear-gradient(90deg, transparent 0%, rgba(232, 160, 48, 0.55) 50%, transparent 100%)',
+            }}
+          />
+
           {/* Eyebrow label */}
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2, ease: REVEAL_EASE }}
+            transition={{ duration: 0.8, delay: 0.35, ease: REVEAL_EASE }}
             className="font-inter font-medium uppercase"
             style={{
               fontSize: 'var(--text-caption)',
@@ -86,7 +115,7 @@ export default function ClosingCTA() {
           <motion.h1
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1.0, delay: 0.35, ease: REVEAL_EASE }}
+            transition={{ duration: 1.0, delay: 0.5, ease: REVEAL_EASE }}
             className="font-satoshi font-bold"
             style={{
               fontSize: 'clamp(2.5rem, 6vw, 4.5rem)',
@@ -105,7 +134,7 @@ export default function ClosingCTA() {
           <motion.p
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.9, delay: 0.6, ease: REVEAL_EASE }}
+            transition={{ duration: 0.9, delay: 0.75, ease: REVEAL_EASE }}
             className="font-inter"
             style={{
               fontSize: 'clamp(1rem, 1.4vw, 1.125rem)',
@@ -120,11 +149,11 @@ export default function ClosingCTA() {
             Workforce, Veteran Services, and Mental Health.
           </motion.p>
 
-          {/* CTA row — right-justified for tension against left-aligned text */}
+          {/* CTA row */}
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.9, delay: 0.85, ease: REVEAL_EASE }}
+            transition={{ duration: 0.9, delay: 1.0, ease: REVEAL_EASE }}
             className="flex flex-wrap gap-md items-center pt-sm"
             style={{ justifyContent: 'flex-start' }}
           >
@@ -138,7 +167,7 @@ export default function ClosingCTA() {
               Meet the Founder
             </CTAButton>
           </motion.div>
-        </div>
+        </motion.div>
       </div>
 
       {/* ═══════════════════════════════════════════════════════════
