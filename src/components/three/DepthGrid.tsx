@@ -12,7 +12,7 @@ interface DepthGridProps {
 
 /** Scenes where the grid is visible */
 const VISIBLE_SCENES = new Set<SceneName>([
-  'hub', 'maps', 'kit', 'base', 'scout', 'impact', 'closing',
+  'hub', 'maps', 'kit', 'base', 'scout',
 ]);
 
 const vertexShader = /* glsl */ `
@@ -40,70 +40,52 @@ const fragmentShader = /* glsl */ `
   varying float vDistFromCenter;
   varying vec2 vUv;
 
-  // Hash for pseudo-random pulse phase per intersection
   float hash(vec2 p) {
     return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
   }
 
   void main() {
-    // Scene visibility — smooth fade in/out
     if (uVisibility < 0.001) discard;
 
-    // Distance-based fade: full near center → 0 at fade distance
     float distFade = 1.0 - smoothstep(0.0, uFadeDistance, vDistFromCenter);
 
-    // Edge blur: radial softness at the plane edges (DOF approximation)
-    // Uses UV distance from center of the plane for a soft vignette on the grid itself
     vec2 edgeUv = vUv * 2.0 - 1.0;
     float edgeDist = length(edgeUv);
     float edgeSoftness = 1.0 - smoothstep(0.6, 1.0, edgeDist);
 
-    // --- Major grid lines (2-unit intervals) ---
     vec2 majorGrid = abs(fract(vWorldPos / 2.0 - 0.5) - 0.5) * 2.0;
     float majorLineX = 1.0 - smoothstep(0.0, 0.04, majorGrid.x);
     float majorLineY = 1.0 - smoothstep(0.0, 0.04, majorGrid.y);
     float majorLines = max(majorLineX, majorLineY);
 
-    // --- Minor grid lines (0.5-unit intervals, 10% opacity relative to major) ---
     vec2 minorGrid = abs(fract(vWorldPos / 0.5 - 0.5) - 0.5) * 0.5;
     float minorLineX = 1.0 - smoothstep(0.0, 0.02, minorGrid.x);
     float minorLineY = 1.0 - smoothstep(0.0, 0.02, minorGrid.y);
     float minorLines = max(minorLineX, minorLineY) * 0.1;
 
-    // Minor lines fade faster with distance (disappear before major lines)
     float minorDistFade = 1.0 - smoothstep(0.0, uFadeDistance * 0.4, vDistFromCenter);
     minorLines *= minorDistFade;
 
-    // --- Section lines (10-unit intervals, slightly brighter) ---
     vec2 sectionGrid = abs(fract(vWorldPos / 10.0 - 0.5) - 0.5) * 10.0;
     float sectionLineX = 1.0 - smoothstep(0.0, 0.06, sectionGrid.x);
     float sectionLineY = 1.0 - smoothstep(0.0, 0.06, sectionGrid.y);
     float sectionLines = max(sectionLineX, sectionLineY) * 1.4;
 
-    // Combine line layers
     float lines = max(max(majorLines, minorLines), sectionLines);
 
-    // --- Intersection point pulses ---
     vec2 nearestIntersection = round(vWorldPos / 2.0) * 2.0;
     float distToIntersection = length(vWorldPos - nearestIntersection);
-
-    // Dot at intersection: small circle
     float dot = 1.0 - smoothstep(0.06, 0.12, distToIntersection);
 
-    // Random pulse per intersection — varied speed and phase
     float phase = hash(nearestIntersection) * 6.2831;
     float speed = 0.4 + hash(nearestIntersection + 1.0) * 0.6;
     float pulse = 0.3 + 0.7 * (0.5 + 0.5 * sin(uTime * speed + phase));
 
-    // Only ~30% of intersections pulse visibly (the rest stay dim)
     float pulseChance = step(0.7, hash(nearestIntersection + 2.0));
     float intersectionGlow = dot * mix(0.2, pulse, pulseChance) * 0.6;
 
-    // Final composited alpha
     float alpha = (lines + intersectionGlow) * distFade * edgeSoftness * uOpacity * uVisibility;
 
-    // Color: grid lines are desaturated to stay below bloom threshold
-    // Intersection pulses are slightly brighter for "data node" read
     vec3 gridColor = uColor * 0.55;
     vec3 intersectionColor = uColor * 0.7;
     float intersectionMix = intersectionGlow / max(lines + intersectionGlow, 0.001);
@@ -119,9 +101,7 @@ export default function DepthGrid({ opacity = 0.22, color = '#00CED1' }: DepthGr
   const meshRef = useRef<THREE.Mesh>(null);
   const { pointer } = useThree();
 
-  // Smoothed pointer for parallax
   const smoothPointer = useRef({ x: 0, y: 0 });
-  // Smoothed visibility for fade transitions
   const targetVisibility = useRef(1);
 
   const uniforms = useMemo(
@@ -139,28 +119,23 @@ export default function DepthGrid({ opacity = 0.22, color = '#00CED1' }: DepthGr
   useFrame((_, delta) => {
     const currentScene = usePortalStore.getState().currentScene;
 
-    // Scene visibility — fade in/out over ~0.5s
     targetVisibility.current = VISIBLE_SCENES.has(currentScene) ? 1 : 0;
     const currentVis = uniforms.uVisibility.value;
     uniforms.uVisibility.value += (targetVisibility.current - currentVis) * Math.min(delta * 3, 1);
 
-    // Skip all processing when fully invisible
     if (uniforms.uVisibility.value < 0.001) {
       if (meshRef.current) meshRef.current.visible = false;
       return;
     }
     if (meshRef.current) meshRef.current.visible = true;
 
-    // Animate intersection pulses
     uniforms.uTime.value += delta;
 
-    // Parallax: lerp toward pointer, offset grid position subtly
     if (meshRef.current) {
       const lerpFactor = 0.05;
       smoothPointer.current.x += (pointer.x - smoothPointer.current.x) * lerpFactor;
       smoothPointer.current.y += (pointer.y - smoothPointer.current.y) * lerpFactor;
 
-      // Shift grid 0.3-0.5 units based on pointer (tabletop parallax)
       meshRef.current.position.x = smoothPointer.current.x * 0.4;
       meshRef.current.position.z = -smoothPointer.current.y * 0.3;
     }

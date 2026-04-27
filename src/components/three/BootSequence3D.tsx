@@ -8,20 +8,20 @@ import { COLORS } from '@/utils/constants';
 import { usePortalStore } from '@/state/portalStore';
 
 // ---------------------------------------------------------------------------
-// Config — adapted from reference azimuth-portal BootSequence
+// Config
 // ---------------------------------------------------------------------------
 
 const PHASE_BLACK = 500;    // ms
-const PHASE_RESOLVE = 1200; // ms — logo fades in
-const PHASE_HOLD = 600;     // ms — logo visible
-const PHASE_SCATTER = 500;  // ms — particles burst out
+const PHASE_RESOLVE = 1200; // ms
+const PHASE_HOLD = 600;     // ms
+const PHASE_SCATTER = 500;  // ms
 
 const PARTICLE_COUNT = 500;
 
 type BootPhase = 'black' | 'resolve' | 'hold' | 'scatter' | 'done';
 
 // ---------------------------------------------------------------------------
-// "A" monogram — from SVG logomark (same approach as reference project)
+// "A" monogram shape
 // ---------------------------------------------------------------------------
 
 function createAzimuthAShape(): THREE.Shape {
@@ -43,7 +43,6 @@ function createAzimuthAShape(): THREE.Shape {
   shape.lineTo((25 - cx) * s, -(432 - cy) * s);
   shape.closePath();
 
-  // Horizon band cutout
   const band = new THREE.Path();
   const b1y1 = -(296 - cy) * s;
   const b1y2 = -(323 - cy) * s;
@@ -58,7 +57,7 @@ function createAzimuthAShape(): THREE.Shape {
 }
 
 // ---------------------------------------------------------------------------
-// Logo mesh sub-component
+// Logo mesh
 // ---------------------------------------------------------------------------
 
 function AzimuthLogo({ opacity }: { opacity: number }) {
@@ -106,7 +105,6 @@ function AzimuthLogo({ opacity }: { opacity: number }) {
     groupRef.current.rotation.y += dampedSpeed * delta;
   });
 
-  // Sun position: SVG circle at (250, 302) → (0, -0.62)
   const sunY = -0.62;
 
   return (
@@ -160,7 +158,6 @@ export default function BootSequence3D() {
     return { particlePositions: pos, particleVelocities: vel };
   }, []);
 
-  // GSAP timeline drives the boot sequence
   useEffect(() => {
     if (currentScene !== 'boot') return;
 
@@ -170,10 +167,8 @@ export default function BootSequence3D() {
 
     const tl = gsap.timeline();
 
-    // Phase 1: Black
     tl.to({}, { duration: PHASE_BLACK / 1000, onComplete: () => setPhase('resolve') });
 
-    // Phase 2: Resolve — fade in
     tl.to(opacityRef.current, {
       value: 1,
       duration: PHASE_RESOLVE / 1000,
@@ -181,10 +176,8 @@ export default function BootSequence3D() {
       onUpdate: () => setLogoOpacity(opacityRef.current.value),
     });
 
-    // Phase 3: Hold
     tl.to({}, { duration: PHASE_HOLD / 1000, onComplete: () => setPhase('scatter') });
 
-    // Phase 4: Scatter — fade out + particle burst
     tl.to(opacityRef.current, {
       value: 0,
       duration: PHASE_SCATTER / 1000,
@@ -192,16 +185,14 @@ export default function BootSequence3D() {
       onUpdate: () => setLogoOpacity(opacityRef.current.value),
     });
 
-    // Transition to gauntlet
+    // Boot animation complete — stay on boot scene until user taps
     tl.call(() => {
       setPhase('done');
-      usePortalStore.getState().setScene('gauntlet');
     });
 
     return () => { tl.kill(); };
   }, [currentScene]);
 
-  // Animate scatter particles
   useFrame((_, delta) => {
     if (phase !== 'scatter' || !particlesRef.current) return;
     const posAttr = particlesRef.current.geometry.getAttribute('position') as THREE.BufferAttribute;
@@ -215,7 +206,6 @@ export default function BootSequence3D() {
     posAttr.needsUpdate = true;
   });
 
-  // === CONDITIONAL RETURN — completely unmount when not boot ===
   if (currentScene !== 'boot') return null;
 
   return (
