@@ -38,6 +38,7 @@ import NOVANarration from '@/components/ui/NOVANarration';
 export default function BASEShowcase() {
   const currentScene = usePortalStore((s) => s.currentScene);
   const setCarouselIndex = usePortalStore((s) => s.setCarouselIndex);
+  const goTo = usePortalStore((s) => s.goTo);
 
   if (currentScene !== 'base') return null;
 
@@ -47,7 +48,7 @@ export default function BASEShowcase() {
       style={{ touchAction: 'pan-y' }}
     >
       <div className="w-full max-w-2xl px-lg">
-        <SwipeCarousel onIndexChange={setCarouselIndex}>
+        <SwipeCarousel onIndexChange={setCarouselIndex} onLastCardTap={() => goTo('hub')}>
           {/* Card 1: The Problem (Before) — validates the structural barrier */}
           <GlassPanel size="full" tiltOnTouch>
             <div className="space-y-lg p-md">
