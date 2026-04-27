@@ -47,6 +47,7 @@ export default function BootSequence() {
           color: 'rgba(216, 222, 233, 0.55)',
           fontSize: 'clamp(1.25rem, 2.4vw, 2rem)',
           letterSpacing: '0.55em',
+          paddingLeft: '0.55em', // compensate for trailing letter-spacing so visual center matches box center
           fontWeight: 300,
           userSelect: 'none',
           pointerEvents: 'none',
@@ -67,6 +68,7 @@ export default function BootSequence() {
           color: 'rgba(216, 222, 233, 0.5)',
           fontSize: 'clamp(0.75rem, 1.1vw, 0.95rem)',
           letterSpacing: '0.4em',
+          paddingLeft: '0.4em', // compensate for trailing letter-spacing
           fontWeight: 400,
           userSelect: 'none',
           pointerEvents: 'none',
