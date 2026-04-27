@@ -65,13 +65,13 @@ body {
 
   overscroll-behavior: none;
   touch-action: manipulation;
-}
 
-/* Kiosk mode — hide cursor entirely */
-body.kiosk {
+  /* Touch-only kiosk — no cursor on any device */
   cursor: none;
 }
-body.kiosk * {
+
+/* Belt-and-suspenders: every descendant also hides cursor */
+* {
   cursor: none !important;
 }
 

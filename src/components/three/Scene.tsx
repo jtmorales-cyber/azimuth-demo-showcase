@@ -84,6 +84,7 @@ export default function Scene() {
     <Canvas
       camera={{ position: [0, 0, 5], fov: 50 }}
       gl={{ antialias: true, alpha: false }}
+      dpr={[1, 1.5]}
       onCreated={({ gl }) => {
         gl.setClearColor('#0A0E1A');
       }}
