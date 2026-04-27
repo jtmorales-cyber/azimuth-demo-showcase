@@ -4,197 +4,187 @@ import { useRef, useMemo, useEffect, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import gsap from 'gsap';
-import { COLORS } from '@/utils/constants';
 import { usePortalStore } from '@/state/portalStore';
 
-// Ported from azimuth-portal/src/scenes/BootSequence.tsx (mm_idst_demo).
-// Adapted: default export (Scene.tsx imports default), no auto-transition
-// to gauntlet — boot holds on the 'done' phase until the user taps the
-// overlay (BootSequence.tsx HTML), which calls goTo('hub').
+// Boot sequence: black → resolve → hold-forever-until-tap.
+// Geometry: SVG-traced "A" wordmark with horizontal band cutout +
+// orange sun sphere inside the band. The HTML overlay
+// (src/scenes/BootSequence.tsx) provides the AZIMUTH wordmark and
+// TAP TO BEGIN prompt and calls goTo('hub') on tap.
 
-const PARTICLE_COUNT = 500;
+const PHASE_BLACK = 500;    // ms
+const PHASE_RESOLVE = 1200; // ms
 
-const PHASE_BLACK = 500;
-const PHASE_RESOLVE = 1000;
-const PHASE_HOLD = 500;
-const PHASE_SCATTER = 500;
+type BootPhase = 'black' | 'resolve' | 'hold';
 
-type BootPhase = 'black' | 'resolve' | 'hold' | 'scatter' | 'done';
+// Trace the Azimuth "A" monogram from the brand SVG path.
+// Coordinates are in SVG space (viewBox roughly 0-500 wide, 0-500 tall);
+// we recenter on (cx,cy) and scale down by `s` so the geometry sits in
+// a ~5-unit-tall world space comfortably visible from camera (0,0,5).
+function createAzimuthAShape(): THREE.Shape {
+  const s = 1 / 100;
+  const cx = 250, cy = 240;
+
+  const shape = new THREE.Shape();
+  shape.moveTo((190 - cx) * s, -(40 - cy) * s);
+  shape.lineTo((310 - cx) * s, -(40 - cy) * s);
+  shape.lineTo((475 - cx) * s, -(432 - cy) * s);
+  shape.lineTo((357 - cx) * s, -(432 - cy) * s);
+  shape.lineTo((331 - cx) * s, -(371 - cy) * s);
+  shape.lineTo((366 - cx) * s, -(371 - cy) * s);
+  shape.lineTo((260 - cx) * s, -(116 - cy) * s);
+  shape.lineTo((240 - cx) * s, -(116 - cy) * s);
+  shape.lineTo((134 - cx) * s, -(371 - cy) * s);
+  shape.lineTo((169 - cx) * s, -(371 - cy) * s);
+  shape.lineTo((143 - cx) * s, -(432 - cy) * s);
+  shape.lineTo((25 - cx) * s, -(432 - cy) * s);
+  shape.closePath();
+
+  // Horizon band cutout that the sun sits inside.
+  const band = new THREE.Path();
+  const b1y1 = -(296 - cy) * s;
+  const b1y2 = -(323 - cy) * s;
+  band.moveTo(-2.5, b1y1);
+  band.lineTo(2.5, b1y1);
+  band.lineTo(2.5, b1y2);
+  band.lineTo(-2.5, b1y2);
+  band.closePath();
+  shape.holes.push(band);
+
+  return shape;
+}
+
+function AzimuthLogo({ opacity }: { opacity: number }) {
+  const groupRef = useRef<THREE.Group>(null);
+  const elapsedRef = useRef(0);
+
+  const aShape = useMemo(() => createAzimuthAShape(), []);
+
+  const aMaterial = useMemo(
+    () =>
+      new THREE.MeshPhysicalMaterial({
+        color: new THREE.Color('#00B4CF'),
+        transmission: 0.75,
+        thickness: 0.8,
+        roughness: 0.08,
+        ior: 1.9,
+        envMapIntensity: 1.5,
+        emissive: new THREE.Color('#00B4CF'),
+        emissiveIntensity: 0.15,
+        transparent: true,
+        opacity: 0,
+        clearcoat: 1.0,
+        clearcoatRoughness: 0.05,
+      }),
+    []
+  );
+
+  const sunMaterial = useMemo(
+    () =>
+      new THREE.MeshPhysicalMaterial({
+        color: new THREE.Color('#FF5601'),
+        emissive: new THREE.Color('#FF5601'),
+        emissiveIntensity: 0.8,
+        roughness: 0.3,
+        metalness: 0.1,
+        transparent: true,
+        opacity: 0,
+      }),
+    []
+  );
+
+  useEffect(() => {
+    aMaterial.opacity = opacity;
+    sunMaterial.opacity = opacity;
+    sunMaterial.emissiveIntensity = 0.8 * opacity;
+  }, [opacity, aMaterial, sunMaterial]);
+
+  // Damped Y-rotation that slows to a near-stop after a few seconds
+  // — keeps the boot logo from feeling completely lifeless without
+  // distracting from the wordmark.
+  useFrame((_, delta) => {
+    if (!groupRef.current) return;
+    elapsedRef.current += delta;
+    const t = elapsedRef.current;
+    const dampedSpeed = 0.15 * Math.exp(-t * 0.3) + 0.05;
+    groupRef.current.rotation.y += dampedSpeed * delta;
+  });
+
+  // SVG circle was at (250, 302) — in our recentered coords that's (0, -0.62).
+  const sunY = -0.62;
+
+  return (
+    <group ref={groupRef} scale={1.2}>
+      <mesh material={aMaterial} position={[0, 0, -0.25]}>
+        <extrudeGeometry
+          args={[
+            aShape,
+            {
+              depth: 0.5,
+              bevelEnabled: true,
+              bevelThickness: 0.03,
+              bevelSize: 0.02,
+              bevelSegments: 3,
+            },
+          ]}
+        />
+      </mesh>
+
+      <mesh material={sunMaterial} position={[0, sunY, 0]}>
+        <sphereGeometry args={[0.55, 32, 32]} />
+      </mesh>
+
+      <pointLight position={[0, sunY, 0.5]} color="#FF5601" intensity={2 * opacity} distance={8} decay={2} />
+      <pointLight position={[0, sunY, -0.5]} color="#E8A030" intensity={1 * opacity} distance={6} decay={2} />
+      <pointLight position={[0, 1.5, 1]}    color="#00CED1" intensity={0.5 * opacity} distance={5} decay={2} />
+    </group>
+  );
+}
 
 export default function BootSequence3D() {
   const currentScene = usePortalStore((s) => s.currentScene);
-
-  const meshRef = useRef<THREE.Mesh>(null);
-  const lightRef = useRef<THREE.PointLight>(null);
-  const particlesRef = useRef<THREE.Points>(null);
   const [phase, setPhase] = useState<BootPhase>('black');
   const opacityRef = useRef({ value: 0 });
-  const lightIntensityRef = useRef({ value: 0 });
-
-  const { particlePositions, particleVelocities } = useMemo(() => {
-    const pos = new Float32Array(PARTICLE_COUNT * 3);
-    const vel = new Float32Array(PARTICLE_COUNT * 3);
-
-    for (let i = 0; i < PARTICLE_COUNT; i++) {
-      pos[i * 3]     = (Math.random() - 0.5) * 0.5;
-      pos[i * 3 + 1] = (Math.random() - 0.5) * 0.8;
-      pos[i * 3 + 2] = (Math.random() - 0.5) * 0.3;
-
-      const theta = Math.random() * Math.PI * 2;
-      const phi = Math.acos(2 * Math.random() - 1);
-      const speed = 2 + Math.random() * 4;
-      vel[i * 3]     = Math.sin(phi) * Math.cos(theta) * speed;
-      vel[i * 3 + 1] = Math.sin(phi) * Math.sin(theta) * speed;
-      vel[i * 3 + 2] = Math.cos(phi) * speed;
-    }
-
-    return { particlePositions: pos, particleVelocities: vel };
-  }, []);
+  const [logoOpacity, setLogoOpacity] = useState(0);
 
   useEffect(() => {
     if (currentScene !== 'boot') return;
 
     setPhase('black');
     opacityRef.current.value = 0;
-    lightIntensityRef.current.value = 0;
+    setLogoOpacity(0);
 
-    const timeline = gsap.timeline();
+    const tl = gsap.timeline();
 
     // Phase 1: Black
-    timeline.to({}, {
+    tl.to({}, {
       duration: PHASE_BLACK / 1000,
       onComplete: () => setPhase('resolve'),
     });
 
-    // Phase 2: Resolve — monogram fades in
-    timeline.to(opacityRef.current, {
+    // Phase 2: Resolve — logo fades in
+    tl.to(opacityRef.current, {
       value: 1,
       duration: PHASE_RESOLVE / 1000,
       ease: 'power2.inOut',
-      onUpdate: () => {
-        if (meshRef.current) {
-          const mat = meshRef.current.material as THREE.MeshPhysicalMaterial;
-          mat.opacity = opacityRef.current.value;
-        }
-      },
+      onUpdate: () => setLogoOpacity(opacityRef.current.value),
+      onComplete: () => setPhase('hold'),
     });
 
-    // Amber core light ignites partway through resolve
-    timeline.to(lightIntensityRef.current, {
-      value: 3,
-      duration: (PHASE_RESOLVE / 1000) * 0.6,
-      ease: 'power3.in',
-      onUpdate: () => {
-        if (lightRef.current) {
-          lightRef.current.intensity = lightIntensityRef.current.value;
-        }
-      },
-    }, `-=${(PHASE_RESOLVE / 1000) * 0.4}`);
-
-    // Phase 3: Hold
-    timeline.to({}, {
-      duration: PHASE_HOLD / 1000,
-      onComplete: () => setPhase('scatter'),
-    });
-
-    // Phase 4: Scatter — monogram fades out, particles burst
-    timeline.to(opacityRef.current, {
-      value: 0,
-      duration: PHASE_SCATTER / 1000,
-      ease: 'power2.in',
-      onUpdate: () => {
-        if (meshRef.current) {
-          const mat = meshRef.current.material as THREE.MeshPhysicalMaterial;
-          mat.opacity = opacityRef.current.value;
-        }
-      },
-    });
-
-    timeline.to(lightIntensityRef.current, {
-      value: 0,
-      duration: PHASE_SCATTER / 1000,
-      onUpdate: () => {
-        if (lightRef.current) {
-          lightRef.current.intensity = lightIntensityRef.current.value;
-        }
-      },
-    }, `-=${PHASE_SCATTER / 1000}`);
-
-    // Boot animation complete — stay on boot scene until user taps overlay
-    timeline.call(() => {
-      setPhase('done');
-    });
+    // Phase 3: Hold forever — user must tap the overlay to advance.
+    // (No scatter, no auto-transition. 60s idle resets to hub via useIdleTimeout.)
 
     return () => {
-      timeline.kill();
+      tl.kill();
     };
   }, [currentScene]);
-
-  useFrame((_, delta) => {
-    if (phase !== 'scatter' || !particlesRef.current) return;
-
-    const posAttr = particlesRef.current.geometry.getAttribute('position') as THREE.BufferAttribute;
-    const posArray = posAttr.array as Float32Array;
-
-    for (let i = 0; i < PARTICLE_COUNT; i++) {
-      const i3 = i * 3;
-      posArray[i3]     += particleVelocities[i3]     * delta;
-      posArray[i3 + 1] += particleVelocities[i3 + 1] * delta;
-      posArray[i3 + 2] += particleVelocities[i3 + 2] * delta;
-    }
-    posAttr.needsUpdate = true;
-  });
 
   if (currentScene !== 'boot') return null;
 
   return (
     <group>
-      {/* Crystalline "A" monogram — 3-sided cone (pyramid) */}
-      <mesh ref={meshRef} scale={1.5}>
-        <coneGeometry args={[0.6, 1.2, 3]} />
-        <meshPhysicalMaterial
-          color={COLORS.CYAN_STRUCT}
-          transmission={0.85}
-          thickness={0.8}
-          roughness={0.1}
-          ior={1.8}
-          envMapIntensity={1.2}
-          transparent
-          opacity={0}
-          emissive={COLORS.AMBER_CORE}
-          emissiveIntensity={0.2}
-        />
-      </mesh>
-
-      {/* Amber core light inside the monogram */}
-      <pointLight
-        ref={lightRef}
-        position={[0, 0, 0]}
-        color={COLORS.AMBER_CORE}
-        intensity={0}
-        distance={10}
-        decay={2}
-      />
-
-      {/* Scatter particles — only visible during scatter phase */}
-      {phase === 'scatter' && (
-        <points ref={particlesRef}>
-          <bufferGeometry>
-            <bufferAttribute
-              attach="attributes-position"
-              args={[particlePositions, 3]}
-            />
-          </bufferGeometry>
-          <pointsMaterial
-            color={COLORS.AMBER_CORE}
-            size={0.03}
-            transparent
-            opacity={0.8}
-            blending={THREE.AdditiveBlending}
-            depthWrite={false}
-          />
-        </points>
-      )}
+      <ambientLight intensity={0.03} color="#0A0E1A" />
+      <AzimuthLogo opacity={logoOpacity} />
     </group>
   );
 }
