@@ -15,6 +15,9 @@ export interface PortalState {
   previousScene: SceneName | null;
   isTransitioning: boolean;
 
+  // Scroll tracking (for scroll-driven animations)
+  scrollProgress: number;
+
   // Showcase carousel
   activeCarouselIndex: number;
 
@@ -31,6 +34,9 @@ export interface PortalState {
   // Actions — navigation
   goTo: (scene: SceneName) => void;
   completeTransition: () => void;
+
+  // Actions — scroll
+  setScrollProgress: (progress: number) => void;
 
   // Actions — carousel
   setCarouselIndex: (index: number) => void;
@@ -58,6 +64,7 @@ export const usePortalStore = create<PortalState>()(
       currentScene: 'boot',
       previousScene: null,
       isTransitioning: false,
+      scrollProgress: 0,
       activeCarouselIndex: 0,
       hoveredNode: null,
       audioMuted: false,
@@ -77,6 +84,11 @@ export const usePortalStore = create<PortalState>()(
       completeTransition: () =>
         set((state) => {
           state.isTransitioning = false;
+        }),
+
+      setScrollProgress: (progress) =>
+        set((state) => {
+          state.scrollProgress = progress;
         }),
 
       setCarouselIndex: (index) =>
