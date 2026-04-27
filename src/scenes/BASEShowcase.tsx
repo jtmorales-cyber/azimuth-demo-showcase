@@ -3,6 +3,7 @@
 import { usePortalStore } from '@/state/portalStore';
 import SwipeCarousel from '@/components/ui/SwipeCarousel';
 import GlassPanel from '@/components/ui/GlassPanel';
+import ToolTitle from '@/components/ui/ToolTitle';
 import MetricCard from '@/components/ui/MetricCard';
 import FeatureRow from '@/components/ui/FeatureRow';
 import NOVANarration from '@/components/ui/NOVANarration';
@@ -52,6 +53,7 @@ export default function BASEShowcase() {
           {/* Card 1: The Problem (Before) — validates the structural barrier */}
           <GlassPanel size="full" tiltOnTouch>
             <div className="space-y-lg p-md">
+              <ToolTitle name="BASE" />
               <div
                 className="font-inter font-medium tracking-wider uppercase"
                 style={{ color: 'var(--sage-muted)', fontSize: 'var(--text-caption)' }}
@@ -91,6 +93,7 @@ export default function BASEShowcase() {
           {/* Card 2: The Solution (Bridge) — meets you where you are */}
           <GlassPanel size="full" tiltOnTouch>
             <div className="space-y-lg p-md">
+              <ToolTitle name="BASE" />
               <div
                 className="font-inter font-medium tracking-wider uppercase"
                 style={{ color: 'var(--calm-purple)', fontSize: 'var(--text-caption)' }}
@@ -131,6 +134,7 @@ export default function BASEShowcase() {
           {/* Card 3: The Outcome (After) — foundation for total wellness */}
           <GlassPanel size="full" tiltOnTouch>
             <div className="space-y-lg p-md">
+              <ToolTitle name="BASE" />
               <div
                 className="font-inter font-medium tracking-wider uppercase"
                 style={{ color: 'var(--amber-core)', fontSize: 'var(--text-caption)' }}
@@ -167,6 +171,7 @@ export default function BASEShowcase() {
           {/* Card 4: NOVA's Take — no lectures, no resiliency PowerPoints */}
           <GlassPanel size="full" tiltOnTouch>
             <div className="space-y-lg p-md">
+              <ToolTitle name="BASE" />
               <div
                 className="font-inter font-medium tracking-wider uppercase"
                 style={{ color: 'var(--amber-core)', fontSize: 'var(--text-caption)' }}
