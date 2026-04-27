@@ -44,6 +44,32 @@ function createNodeGeometry(type: GeometryType): THREE.BufferGeometry {
 }
 
 // ---------------------------------------------------------------------------
+// Per-color brightness normalization
+//
+// The Bloom postprocess threshold (0.6 luminance) means the bright cyan KIT
+// and amber MAPS bloom strongly while the darker BASE purple and SCOUT navy
+// barely register. Compute a per-color boost so every node's hover state
+// reaches the same perceived brightness in the bloom buffer.
+//
+// Strategy: take the color's Rec. 601 luminance and scale toward a target
+// brightness of 0.65 (matching the brightest brand color, AMBER_CORE).
+// Capped to avoid runaway HDR values.
+// ---------------------------------------------------------------------------
+
+const TARGET_LUMINANCE = 0.65;
+const MAX_BOOST = 3.5;
+
+function colorLuminance(color: string): number {
+  const c = new THREE.Color(color);
+  return 0.299 * c.r + 0.587 * c.g + 0.114 * c.b;
+}
+
+function getBloomBoost(color: string): number {
+  const lum = Math.max(0.15, colorLuminance(color));
+  return Math.min(MAX_BOOST, TARGET_LUMINANCE / lum);
+}
+
+// ---------------------------------------------------------------------------
 // Edge highlights — LineSegments overlay that outlines every edge
 // Sphere geometries look bad with edges (too many lines), so we skip them
 // ---------------------------------------------------------------------------
@@ -91,10 +117,13 @@ function InnerCore({
   hoverState: { current: number };
 }) {
   const matRef = useRef<THREE.MeshStandardMaterial>(null);
+  // Dark colors need higher emissive intensity to reach the same perceived brightness.
+  const boost = useMemo(() => getBloomBoost(color), [color]);
 
   useFrame(() => {
     if (matRef.current) {
-      matRef.current.emissiveIntensity = 2.5 + hoverState.current * 1.5;
+      // Base 2.5 at rest, +1.5 × boost at full hover (≈ 4.0 for bright colors, ≈ 7.0 for SCOUT navy).
+      matRef.current.emissiveIntensity = 2.5 * boost + hoverState.current * 1.5 * boost;
     }
   });
 
@@ -127,6 +156,13 @@ function HoverGlow({
   hoverState: { current: number };
 }) {
   const matRef = useRef<THREE.MeshBasicMaterial>(null);
+  // Pre-multiply the base color by the per-luminance boost so dark colors
+  // contribute as much HDR brightness as bright ones when the halo blends in.
+  const haloColor = useMemo(() => {
+    const c = new THREE.Color(color);
+    c.multiplyScalar(getBloomBoost(color));
+    return c;
+  }, [color]);
 
   useFrame(() => {
     if (matRef.current) {
@@ -139,7 +175,7 @@ function HoverGlow({
       <sphereGeometry args={[1.5, 32, 32]} />
       <meshBasicMaterial
         ref={matRef}
-        color={color}
+        color={haloColor}
         transparent
         opacity={0}
         depthWrite={false}
@@ -212,6 +248,8 @@ export default function ToolNode({
 
   // Shared geometry between body and edges
   const nodeGeometry = useMemo(() => createNodeGeometry(geometry), [geometry]);
+  // Per-color brightness boost — applied to body emissive on hover too.
+  const bloomBoost = useMemo(() => getBloomBoost(color), [color]);
 
   // Animation state refs
   const isHovered = useRef(false);
@@ -266,9 +304,9 @@ export default function ToolNode({
     meshRef.current.scale.setScalar(currentScale.current);
     if (edgesGroupRef.current) edgesGroupRef.current.scale.setScalar(currentScale.current);
 
-    // --- Hover emissive lerp on the body. Boost target to 1.8 so dark colors
-    //     (BASE purple, SCOUT navy) push past the 0.6 bloom threshold. ---
-    const targetEmissive = isHovered.current ? 1.8 : 0.2;
+    // --- Hover emissive lerp on the body. Multiplied by per-color bloomBoost
+    //     so all four nodes reach the same perceived bloom intensity. ---
+    const targetEmissive = isHovered.current ? 1.8 * bloomBoost : 0.2;
     currentEmissive.current += (targetEmissive - currentEmissive.current) * 0.1;
     materialRef.current.emissiveIntensity = currentEmissive.current;
 
@@ -352,11 +390,12 @@ export default function ToolNode({
           <span
             style={{
               fontFamily: 'Satoshi, DM Sans, system-ui, sans-serif',
-              fontWeight: 700,
-              fontSize: 16,
-              color: '#D8DEE9',
-              textShadow: '0 1px 6px rgba(0,0,0,0.75)',
-              letterSpacing: '0.04em',
+              fontWeight: 900,
+              fontSize: 18,
+              color: '#FFFFFF',
+              textShadow: '0 1px 8px rgba(0,0,0,0.85)',
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
             }}
           >
             {label}
