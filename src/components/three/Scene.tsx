@@ -13,7 +13,7 @@ import { ToneMappingMode, BlendFunction } from 'postprocessing';
 import { Vector2 } from 'three';
 import SceneGroup from './SceneGroup';
 import DepthGrid from './DepthGrid';
-import NOVASphere from './NOVASphere';
+import AzimuthLogo3D from './AzimuthLogo3D';
 import CompassRing from './CompassRing';
 import ToolNode from './ToolNode';
 import CameraController from '@/camera/CameraController';
@@ -53,7 +53,7 @@ function HubWorld() {
 
   return (
     <SceneGroup scenes={HUB_SCENES}>
-      <NOVASphere position={[0, 0, 0]} />
+      <AzimuthLogo3D />
       <CompassRing radius={8} activeNode={hoveredNode} />
       <ToolNode geometry="dodeca" color={COLORS.AMBER_CORE} label="MAPS" subtitle="Pre-Enlistment"
         position={[NODE_POSITIONS.maps.x, NODE_POSITIONS.maps.y, NODE_POSITIONS.maps.z]}
