@@ -44,32 +44,6 @@ function createNodeGeometry(type: GeometryType): THREE.BufferGeometry {
 }
 
 // ---------------------------------------------------------------------------
-// Per-color brightness normalization
-//
-// The Bloom postprocess threshold (0.6 luminance) means the bright cyan KIT
-// and amber MAPS bloom strongly while the darker BASE purple and SCOUT navy
-// barely register. Compute a per-color boost so every node's hover state
-// reaches the same perceived brightness in the bloom buffer.
-//
-// Strategy: take the color's Rec. 601 luminance and scale toward a target
-// brightness of 0.65 (matching the brightest brand color, AMBER_CORE).
-// Capped to avoid runaway HDR values.
-// ---------------------------------------------------------------------------
-
-const TARGET_LUMINANCE = 0.65;
-const MAX_BOOST = 3.5;
-
-function colorLuminance(color: string): number {
-  const c = new THREE.Color(color);
-  return 0.299 * c.r + 0.587 * c.g + 0.114 * c.b;
-}
-
-function getBloomBoost(color: string): number {
-  const lum = Math.max(0.15, colorLuminance(color));
-  return Math.min(MAX_BOOST, TARGET_LUMINANCE / lum);
-}
-
-// ---------------------------------------------------------------------------
 // Edge highlights — LineSegments overlay that outlines every edge
 // Sphere geometries look bad with edges (too many lines), so we skip them
 // ---------------------------------------------------------------------------
@@ -104,83 +78,20 @@ function EdgeHighlights({
 }
 
 // ---------------------------------------------------------------------------
-// Inner core — small emissive sphere inside the crystalline body
-// Catches bloom so it glows through the transmission material.
-// Brightens on hover via the shared hoverState ref (0 at rest, 1 fully hovered).
+// Inner core — small emissive sphere inside the crystalline body.
+// Constant gentle glow (no hover boost) so the node reads at rest and the
+// central Azimuth logo's amber sun stays the dominant bloom in the hub.
 // ---------------------------------------------------------------------------
 
-function InnerCore({
-  color,
-  hoverState,
-}: {
-  color: string;
-  hoverState: { current: number };
-}) {
-  const matRef = useRef<THREE.MeshStandardMaterial>(null);
-  // Dark colors need higher emissive intensity to reach the same perceived brightness.
-  const boost = useMemo(() => getBloomBoost(color), [color]);
-
-  useFrame(() => {
-    if (matRef.current) {
-      // Base 2.5 at rest, +1.5 × boost at full hover (≈ 4.0 for bright colors, ≈ 7.0 for SCOUT navy).
-      matRef.current.emissiveIntensity = 2.5 * boost + hoverState.current * 1.5 * boost;
-    }
-  });
-
+function InnerCore({ color }: { color: string }) {
   return (
     <mesh>
       <sphereGeometry args={[0.25, 16, 16]} />
       <meshStandardMaterial
-        ref={matRef}
         color={color}
         emissive={color}
-        emissiveIntensity={2.5}
+        emissiveIntensity={1.6}
         toneMapped={false}
-      />
-    </mesh>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Hover glow halo — additive-blended sphere that fades in only on hover.
-// Additive blending guarantees a bright pixel contribution regardless of the
-// node's base color luminance, so dark nodes (BASE purple, SCOUT navy) bloom
-// just as visibly as the bright cyan KIT.
-// ---------------------------------------------------------------------------
-
-function HoverGlow({
-  color,
-  hoverState,
-}: {
-  color: string;
-  hoverState: { current: number };
-}) {
-  const matRef = useRef<THREE.MeshBasicMaterial>(null);
-  // Pre-multiply the base color by the per-luminance boost so dark colors
-  // contribute as much HDR brightness as bright ones when the halo blends in.
-  const haloColor = useMemo(() => {
-    const c = new THREE.Color(color);
-    c.multiplyScalar(getBloomBoost(color));
-    return c;
-  }, [color]);
-
-  useFrame(() => {
-    if (matRef.current) {
-      matRef.current.opacity = hoverState.current * 0.7;
-    }
-  });
-
-  return (
-    <mesh>
-      <sphereGeometry args={[1.5, 32, 32]} />
-      <meshBasicMaterial
-        ref={matRef}
-        color={haloColor}
-        transparent
-        opacity={0}
-        depthWrite={false}
-        toneMapped={false}
-        blending={THREE.AdditiveBlending}
       />
     </mesh>
   );
@@ -248,14 +159,12 @@ export default function ToolNode({
 
   // Shared geometry between body and edges
   const nodeGeometry = useMemo(() => createNodeGeometry(geometry), [geometry]);
-  // Per-color brightness boost — applied to body emissive on hover too.
-  const bloomBoost = useMemo(() => getBloomBoost(color), [color]);
 
   // Animation state refs
   const isHovered = useRef(false);
   const currentScale = useRef(1.0);
   const currentEmissive = useRef(0.2);
-  // hoverState: smooth 0..1 ref that other meshes (HoverGlow, InnerCore) read each frame.
+  // hoverState: smooth 0..1 ref that drives the label fade-in.
   const hoverState = useRef(0);
   const labelOpacity = useRef(0);
   const elapsedTime = useRef(0);
@@ -304,9 +213,9 @@ export default function ToolNode({
     meshRef.current.scale.setScalar(currentScale.current);
     if (edgesGroupRef.current) edgesGroupRef.current.scale.setScalar(currentScale.current);
 
-    // --- Hover emissive lerp on the body. Multiplied by per-color bloomBoost
-    //     so all four nodes reach the same perceived bloom intensity. ---
-    const targetEmissive = isHovered.current ? 1.8 * bloomBoost : 0.2;
+    // --- Hover emissive lerp on the body. Subtle lift from 0.2 → 0.6 — enough
+    //     to signal hover without competing with the central logo's bloom. ---
+    const targetEmissive = isHovered.current ? 0.6 : 0.2;
     currentEmissive.current += (targetEmissive - currentEmissive.current) * 0.1;
     materialRef.current.emissiveIntensity = currentEmissive.current;
 
@@ -358,10 +267,7 @@ export default function ToolNode({
       </group>
 
       {/* Inner glowing core — amber ember trapped in the crystal */}
-      <InnerCore color={color} hoverState={hoverState} />
-
-      {/* Hover-only additive halo — guarantees bloom for ALL node colors */}
-      <HoverGlow color={color} hoverState={hoverState} />
+      <InnerCore color={color} />
 
       {/* Selection ring pulse */}
       <SelectionRing active={isActive} />
