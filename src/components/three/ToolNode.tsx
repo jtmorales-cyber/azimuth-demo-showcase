@@ -79,18 +79,72 @@ function EdgeHighlights({
 
 // ---------------------------------------------------------------------------
 // Inner core — small emissive sphere inside the crystalline body
-// Catches bloom so it glows through the transmission material
+// Catches bloom so it glows through the transmission material.
+// Brightens on hover via the shared hoverState ref (0 at rest, 1 fully hovered).
 // ---------------------------------------------------------------------------
 
-function InnerCore({ color }: { color: string }) {
+function InnerCore({
+  color,
+  hoverState,
+}: {
+  color: string;
+  hoverState: { current: number };
+}) {
+  const matRef = useRef<THREE.MeshStandardMaterial>(null);
+
+  useFrame(() => {
+    if (matRef.current) {
+      matRef.current.emissiveIntensity = 2.5 + hoverState.current * 1.5;
+    }
+  });
+
   return (
     <mesh>
       <sphereGeometry args={[0.25, 16, 16]} />
       <meshStandardMaterial
+        ref={matRef}
         color={color}
         emissive={color}
         emissiveIntensity={2.5}
         toneMapped={false}
+      />
+    </mesh>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Hover glow halo — additive-blended sphere that fades in only on hover.
+// Additive blending guarantees a bright pixel contribution regardless of the
+// node's base color luminance, so dark nodes (BASE purple, SCOUT navy) bloom
+// just as visibly as the bright cyan KIT.
+// ---------------------------------------------------------------------------
+
+function HoverGlow({
+  color,
+  hoverState,
+}: {
+  color: string;
+  hoverState: { current: number };
+}) {
+  const matRef = useRef<THREE.MeshBasicMaterial>(null);
+
+  useFrame(() => {
+    if (matRef.current) {
+      matRef.current.opacity = hoverState.current * 0.7;
+    }
+  });
+
+  return (
+    <mesh>
+      <sphereGeometry args={[1.5, 32, 32]} />
+      <meshBasicMaterial
+        ref={matRef}
+        color={color}
+        transparent
+        opacity={0}
+        depthWrite={false}
+        toneMapped={false}
+        blending={THREE.AdditiveBlending}
       />
     </mesh>
   );
@@ -163,6 +217,8 @@ export default function ToolNode({
   const isHovered = useRef(false);
   const currentScale = useRef(1.0);
   const currentEmissive = useRef(0.2);
+  // hoverState: smooth 0..1 ref that other meshes (HoverGlow, InnerCore) read each frame.
+  const hoverState = useRef(0);
   const labelOpacity = useRef(0);
   const elapsedTime = useRef(0);
 
@@ -200,20 +256,24 @@ export default function ToolNode({
         break;
     }
 
+    // --- Shared hover state lerp (0..1) — drives glow halo + InnerCore + label ---
+    const targetHover = isHovered.current ? 1.0 : 0.0;
+    hoverState.current += (targetHover - hoverState.current) * 0.12;
+
     // --- Hover scale lerp ---
     const targetScale = isHovered.current ? 1.08 : 1.0;
     currentScale.current += (targetScale - currentScale.current) * 0.1;
     meshRef.current.scale.setScalar(currentScale.current);
     if (edgesGroupRef.current) edgesGroupRef.current.scale.setScalar(currentScale.current);
 
-    // --- Hover emissive lerp ---
-    const targetEmissive = isHovered.current ? 0.6 : 0.2;
+    // --- Hover emissive lerp on the body. Boost target to 1.8 so dark colors
+    //     (BASE purple, SCOUT navy) push past the 0.6 bloom threshold. ---
+    const targetEmissive = isHovered.current ? 1.8 : 0.2;
     currentEmissive.current += (targetEmissive - currentEmissive.current) * 0.1;
     materialRef.current.emissiveIntensity = currentEmissive.current;
 
-    // --- Label opacity lerp ---
-    const targetLabelOpacity = isHovered.current ? 1.0 : 0.0;
-    labelOpacity.current += (targetLabelOpacity - labelOpacity.current) * 0.12;
+    // --- Label opacity follows hoverState ---
+    labelOpacity.current = hoverState.current;
   });
 
   return (
@@ -260,12 +320,15 @@ export default function ToolNode({
       </group>
 
       {/* Inner glowing core — amber ember trapped in the crystal */}
-      <InnerCore color={color} />
+      <InnerCore color={color} hoverState={hoverState} />
+
+      {/* Hover-only additive halo — guarantees bloom for ALL node colors */}
+      <HoverGlow color={color} hoverState={hoverState} />
 
       {/* Selection ring pulse */}
       <SelectionRing active={isActive} />
 
-      {/* HTML label overlay */}
+      {/* HTML label overlay — fades in with hoverState */}
       <Html
         position={[0, 1.8, 0]}
         center
@@ -276,24 +339,24 @@ export default function ToolNode({
           userSelect: 'none',
           whiteSpace: 'nowrap',
         }}
-        distanceFactor={10}
+        distanceFactor={8}
       >
         <div
           style={{
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            gap: 2,
+            gap: 3,
           }}
         >
           <span
             style={{
               fontFamily: 'Satoshi, DM Sans, system-ui, sans-serif',
               fontWeight: 700,
-              fontSize: 14,
+              fontSize: 16,
               color: '#D8DEE9',
-              textShadow: '0 1px 4px rgba(0,0,0,0.6)',
-              letterSpacing: '0.02em',
+              textShadow: '0 1px 6px rgba(0,0,0,0.75)',
+              letterSpacing: '0.04em',
             }}
           >
             {label}
@@ -303,8 +366,8 @@ export default function ToolNode({
               fontFamily: 'Inter, IBM Plex Sans, system-ui, sans-serif',
               fontWeight: 400,
               fontSize: 11,
-              color: '#526A82',
-              textShadow: '0 1px 3px rgba(0,0,0,0.4)',
+              color: '#8896A8',
+              textShadow: '0 1px 3px rgba(0,0,0,0.6)',
             }}
           >
             {subtitle}
