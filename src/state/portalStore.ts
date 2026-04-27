@@ -15,9 +15,6 @@ export interface PortalState {
   previousScene: SceneName | null;
   isTransitioning: boolean;
 
-  // Scroll tracking (for scroll-driven animations)
-  scrollProgress: number;
-
   // Showcase carousel
   activeCarouselIndex: number;
 
@@ -31,15 +28,9 @@ export interface PortalState {
   // Idle reset (kiosk)
   isFadingOut: boolean;
 
-  // Scroll progress
-  scrollProgress: number;
-
   // Actions — navigation
   goTo: (scene: SceneName) => void;
   completeTransition: () => void;
-
-  // Actions — scroll
-  setScrollProgress: (progress: number) => void;
 
   // Actions — carousel
   setCarouselIndex: (index: number) => void;
@@ -55,9 +46,6 @@ export interface PortalState {
   registerInteraction: () => void;
   beginFadeOut: () => void;
   resetToHub: () => void;
-
-  // Actions — scroll
-  setScrollProgress: (progress: number) => void;
 }
 
 export const IDLE_TIMEOUT_SEC = 60;
@@ -70,13 +58,11 @@ export const usePortalStore = create<PortalState>()(
       currentScene: 'boot',
       previousScene: null,
       isTransitioning: false,
-      scrollProgress: 0,
       activeCarouselIndex: 0,
       hoveredNode: null,
       audioMuted: false,
       audioResumed: false,
       isFadingOut: false,
-      scrollProgress: 0,
 
       goTo: (scene) =>
         set((state) => {
@@ -91,11 +77,6 @@ export const usePortalStore = create<PortalState>()(
       completeTransition: () =>
         set((state) => {
           state.isTransitioning = false;
-        }),
-
-      setScrollProgress: (progress) =>
-        set((state) => {
-          state.scrollProgress = progress;
         }),
 
       setCarouselIndex: (index) =>
@@ -137,11 +118,6 @@ export const usePortalStore = create<PortalState>()(
           state.activeCarouselIndex = 0;
           state.hoveredNode = null;
           state.isFadingOut = false;
-        }),
-
-      setScrollProgress: (progress) =>
-        set((state) => {
-          state.scrollProgress = progress;
         }),
     }))
   )
