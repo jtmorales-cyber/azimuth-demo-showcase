@@ -1,106 +1,145 @@
 'use client';
 
-import { useRef } from 'react';
-import { useFrame, useThree } from '@react-three/fiber';
+import { useEffect, useRef } from 'react';
+import { useThree, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
+import gsap from 'gsap';
+import { OrbitControls } from 'three-stdlib';
 import { usePortalStore } from '@/state/portalStore';
-import { COMPUTED_SEGMENTS, type ComputedSegment } from './flightPaths';
-import { TIMING } from '@/utils/constants';
-
-// Temp vectors to avoid per-frame allocations
-const _pos = new THREE.Vector3();
-const _look = new THREE.Vector3();
+import { SCENE_FOCUS } from './flightPaths';
+import { EASING } from '@/utils/constants';
 
 /**
- * Find the flight segment that contains a given scroll progress value.
- * Falls back to the last segment if past the end.
- */
-function findSegment(scroll: number): { segment: ComputedSegment; localT: number } {
-  for (const seg of COMPUTED_SEGMENTS) {
-    if (scroll >= seg.scrollStart && scroll < seg.scrollEnd) {
-      const range = seg.scrollEnd - seg.scrollStart;
-      const localT = range > 0 ? (scroll - seg.scrollStart) / range : 0;
-      return { segment: seg, localT: Math.max(0, Math.min(1, localT)) };
-    }
-  }
-  // Past the end — clamp to last segment's final point
-  const last = COMPUTED_SEGMENTS[COMPUTED_SEGMENTS.length - 1];
-  return { segment: last, localT: 1 };
-}
-
-/**
- * Drives the camera position, lookAt, FOV, and roll based on scroll progress
- * read from the Zustand portal store. Uses pre-computed CatmullRomCurve3
- * paths for smooth interpolation.
- *
- * Also applies a gentle orbital drift when the hub scene is active and the
- * user isn't scrolling (idle drift).
+ * Camera system:
+ *   - OrbitControls always active (drag/pinch/zoom freely)
+ *   - GSAP flight triggered on scene change via Zustand subscription
+ *   - Double-tap (< 350ms between taps) recenters camera to current scene focus
+ *   - OrbitControls disabled during flights, re-enabled on complete
  */
 export default function CameraController() {
-  const { camera } = useThree();
-  const prevScrollRef = useRef(0);
-  const idleDriftTime = useRef(0);
+  const { camera, gl } = useThree();
+  const controlsRef = useRef<OrbitControls | null>(null);
+  const isFlying = useRef(false);
+  const lastTapTime = useRef(0);
 
-  useFrame((_, delta) => {
-    const scrollProgress = usePortalStore.getState().scrollProgress;
-    const currentScene = usePortalStore.getState().currentScene;
+  // Initialize OrbitControls
+  useEffect(() => {
+    const cam = camera as THREE.PerspectiveCamera;
+    const controls = new OrbitControls(cam, gl.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.06;
+    controls.minDistance = 3;
+    controls.maxDistance = 45;
+    controls.minPolarAngle = Math.PI * 0.05;
+    controls.maxPolarAngle = Math.PI * 0.8;
 
-    // Determine scroll velocity for idle drift detection
-    const scrollDelta = Math.abs(scrollProgress - prevScrollRef.current);
-    prevScrollRef.current = scrollProgress;
-    const isScrolling = scrollDelta > 0.0001;
+    // Snap camera to current scene focus on init
+    const init = SCENE_FOCUS[usePortalStore.getState().currentScene];
+    cam.position.set(...init.position);
+    cam.lookAt(...init.target);
+    controls.target.set(...init.target);
+    controls.update();
 
-    // --- Scroll-driven camera position ---
-    const { segment, localT } = findSegment(scrollProgress);
+    controlsRef.current = controls;
+    return () => controls.dispose();
+  }, [camera, gl]);
 
-    // Sample curves at localT
-    segment.positionCurve.getPointAt(localT, _pos);
-    segment.lookAtCurve.getPointAt(localT, _look);
-
-    // Interpolate FOV and roll
-    const fov = THREE.MathUtils.lerp(segment.fovStart, segment.fovEnd, localT);
-    const roll = THREE.MathUtils.lerp(segment.rollStart, segment.rollEnd, localT);
-
-    // --- Hub idle orbital drift ---
-    // Additive sine-based orbit when in hub scene and not actively scrolling
-    let driftX = 0;
-    let driftZ = 0;
-
-    if (currentScene === 'hub' && !isScrolling) {
-      idleDriftTime.current += delta;
-      const period = TIMING.ROTATION_PERIOD / 1000; // 45s
-      const angle = (idleDriftTime.current / period) * Math.PI * 2;
-      // Subtle orbital offset: ±1.5 units
-      driftX = Math.sin(angle) * 1.5;
-      driftZ = Math.cos(angle) * 0.8 - 0.8; // slight forward bias
-    } else {
-      // Decay drift time when scrolling so it doesn't accumulate
-      idleDriftTime.current *= 0.95;
-    }
-
-    // Apply position with drift
-    camera.position.set(
-      _pos.x + driftX,
-      _pos.y,
-      _pos.z + driftZ
-    );
-
-    // Apply lookAt
-    camera.lookAt(_look.x, _look.y, _look.z);
-
-    // Apply dutch angle (roll) AFTER lookAt — lookAt resets rotation.z
-    if (Math.abs(roll) > 0.001) {
-      camera.rotation.z = roll;
-    }
-
-    // Apply FOV
-    if (camera instanceof THREE.PerspectiveCamera) {
-      if (Math.abs(camera.fov - fov) > 0.01) {
-        camera.fov = fov;
-        camera.updateProjectionMatrix();
-      }
+  // Drive orbit damping every frame — skip during GSAP flights
+  useFrame(() => {
+    if (controlsRef.current && !isFlying.current) {
+      controlsRef.current.update();
     }
   });
+
+  // Scene change → GSAP camera flight
+  useEffect(() => {
+    const unsub = usePortalStore.subscribe(
+      (s) => s.currentScene,
+      (scene) => {
+        const focus = SCENE_FOCUS[scene];
+        const controls = controlsRef.current;
+        if (!focus || !controls) return;
+
+        isFlying.current = true;
+        controls.enabled = false;
+
+        // Boot is instant (camera was already there on first load)
+        const duration = scene === 'boot' ? 0.01 : scene === 'hub' ? 2.0 : 2.5;
+        const ease = scene === 'hub' ? EASING.CAMERA_PULL_BACK : EASING.CAMERA_APPROACH;
+
+        // Single tween object covers position + lookAt target simultaneously
+        const s = {
+          px: camera.position.x, py: camera.position.y, pz: camera.position.z,
+          tx: controls.target.x, ty: controls.target.y, tz: controls.target.z,
+        };
+
+        gsap.to(s, {
+          px: focus.position[0], py: focus.position[1], pz: focus.position[2],
+          tx: focus.target[0],   ty: focus.target[1],   tz: focus.target[2],
+          duration,
+          ease,
+          onUpdate: () => {
+            camera.position.set(s.px, s.py, s.pz);
+            camera.lookAt(s.tx, s.ty, s.tz);
+            controls.target.set(s.tx, s.ty, s.tz);
+          },
+          onComplete: () => {
+            controls.update();
+            controls.enabled = true;
+            isFlying.current = false;
+            usePortalStore.getState().completeTransition();
+          },
+        });
+      }
+    );
+    return unsub;
+  }, [camera]);
+
+  // Double-tap → recenter
+  useEffect(() => {
+    function handlePointerDown() {
+      const now = Date.now();
+      if (now - lastTapTime.current < 350 && !isFlying.current) {
+        recenter();
+      }
+      lastTapTime.current = now;
+    }
+
+    function recenter() {
+      const scene = usePortalStore.getState().currentScene;
+      const focus = SCENE_FOCUS[scene];
+      const controls = controlsRef.current;
+      if (!focus || !controls) return;
+
+      isFlying.current = true;
+      controls.enabled = false;
+
+      const s = {
+        px: camera.position.x, py: camera.position.y, pz: camera.position.z,
+        tx: controls.target.x, ty: controls.target.y, tz: controls.target.z,
+      };
+
+      gsap.to(s, {
+        px: focus.position[0], py: focus.position[1], pz: focus.position[2],
+        tx: focus.target[0],   ty: focus.target[1],   tz: focus.target[2],
+        duration: 1.0,
+        ease: 'power2.inOut',
+        onUpdate: () => {
+          camera.position.set(s.px, s.py, s.pz);
+          camera.lookAt(s.tx, s.ty, s.tz);
+          controls.target.set(s.tx, s.ty, s.tz);
+        },
+        onComplete: () => {
+          controls.update();
+          controls.enabled = true;
+          isFlying.current = false;
+        },
+      });
+    }
+
+    gl.domElement.addEventListener('pointerdown', handlePointerDown);
+    return () => gl.domElement.removeEventListener('pointerdown', handlePointerDown);
+  }, [camera, gl]);
 
   return null;
 }
