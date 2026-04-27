@@ -30,6 +30,8 @@ export function useIdleTimeout() {
 
     function startIdleTimer() {
       clearTimers();
+      // Idle reset doesn't fire during boot — boot waits for explicit tap
+      if (store.getState().currentScene === 'boot') return;
       idleTimerRef.current = setTimeout(() => {
         store.getState().beginFadeOut();
         fadeTimerRef.current = setTimeout(() => {

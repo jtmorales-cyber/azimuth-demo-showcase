@@ -23,7 +23,20 @@ export default function BootSequence() {
       onTouchStart={advance}
       style={{ cursor: 'pointer' }}
     >
-      {/* AZIMUTH wordmark — below the 3D logo, just past center */}
+      {/* Azimuth logomark — centered in the upper 60% of the viewport */}
+      <div
+        className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2"
+        style={{ top: '42%', pointerEvents: 'none', userSelect: 'none' }}
+      >
+        <img
+          src="/logo/azimuth-logomark.svg"
+          alt=""
+          draggable={false}
+          style={{ width: 'clamp(140px, 22vw, 240px)', display: 'block' }}
+        />
+      </div>
+
+      {/* AZIMUTH wordmark — below the logo, just past center */}
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 0.55, y: 0 }}

@@ -12,7 +12,6 @@ import {
 import { ToneMappingMode, BlendFunction } from 'postprocessing';
 import { Vector2 } from 'three';
 import SceneGroup from './SceneGroup';
-import BootSequence3D from './BootSequence3D';
 import DepthGrid from './DepthGrid';
 import NOVASphere from './NOVASphere';
 import CompassRing from './CompassRing';
@@ -93,9 +92,6 @@ export default function Scene() {
       <SceneSetup />
       <CameraController />
       <ambientLight intensity={0.15} />
-
-      {/* BOOT: crystalline A monogram — unmounts when not boot */}
-      <BootSequence3D />
 
       {/* HUB: NOVA + compass + tool nodes — hidden outside hub scenes */}
       <HubWorld />
