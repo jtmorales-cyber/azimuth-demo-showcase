@@ -77,7 +77,9 @@ export const AUDIO_MAP: Record<SceneAudioKey, SceneAudioConfig> = {
 
   base: {
     base: ['/audio/base-delta.mp3'],
-    interaction: ['/audio/breathing-ambient.mp3'],
+    // Reuses MAPS's confirmation tap — breathing-ambient was an untrimmed
+    // 87s source clip that bled into the next scene on every swipe.
+    interaction: ['/audio/confirmation.mp3'],
     crossfadeMs: 3000, // slowest = calmest
     baseVolume: 0.4,
     loop: true,

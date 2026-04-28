@@ -8,7 +8,7 @@ is the MP3 files themselves.
 The engine has graceful fallback: missing files only `console.warn`, never
 crash. So you can drop assets in piece-by-piece and test as you go.
 
-## Shopping list — 13 CC0 MP3s
+## Shopping list — 12 CC0 MP3s
 
 Drop into this directory with these exact filenames. Source from
 **Pixabay Music** (`pixabay.com/music/`) or **Freesound**
@@ -26,12 +26,12 @@ Drop into this directory with these exact filenames. Source from
 | `kit-pulse.mp3` | 30–60s | yes | Tech HUD pulse, structured rhythm, command-center feel | "tech pulse loop hud" |
 | `click-tap.mp3` | 0.1–0.2s | no | UI click for swipe advance, very short | "ui click button tap" |
 | `base-delta.mp3` | 30–60s | yes | Wellness, slow delta-wave warm pad, calming | "delta wave wellness pad meditation" |
-| `breathing-ambient.mp3` | 1–2s | no | Soft breath/exhale accent, very subtle | "soft breath ambient exhale" |
 | `scout-hum.mp3` | 30–60s | yes | Analytical/precise mid-frequency hum | "analytical drone precise" |
 | `resolve-tone.mp3` | 0.3–0.6s | no | Completion bell / success bowl tone | "completion bell success" |
 
 `hub-pad.mp3` is reused by the `lifecycle` scene (audio continuity — same
-camera, same logo). Only one file is needed.
+camera, same logo). `confirmation.mp3` is reused by the `base` scene
+(MAPS's tap doubles as BASE's swipe blip). Only one file is needed for each.
 
 ## Notes for sourcing
 
@@ -49,7 +49,7 @@ camera, same logo). Only one file is needed.
 ## Verification once dropped
 
 1. `npm run dev` → `localhost:3000`
-2. DevTools Network → confirm 13 `/audio/*.mp3` requests, all 200
+2. DevTools Network → confirm 12 `/audio/*.mp3` requests, all 200
 3. Tap "TAP TO BEGIN" — boot tone plays once, crossfades to hub-pad
 4. Tap a tool node — chime plays, scene crossfades to that drone
 5. Swipe within a sanctuary — that scene's interaction one-shot fires
