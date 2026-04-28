@@ -4,6 +4,7 @@ import { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { COLORS } from '@/utils/constants';
+import { usePortalStore } from '@/state/portalStore';
 
 // ---------------------------------------------------------------------------
 // AzimuthLogo3D — replaces the legacy NOVASphere at the hub center.
@@ -60,6 +61,7 @@ function buildAGeometry(): THREE.ExtrudeGeometry {
 export default function AzimuthLogo3D() {
   const groupRef = useRef<THREE.Group>(null);
   const elapsed = useRef(0);
+  const goTo = usePortalStore((s) => s.goTo);
 
   const aGeometry = useMemo(buildAGeometry, []);
   const aEdges = useMemo(() => new THREE.EdgesGeometry(aGeometry, 1), [aGeometry]);
@@ -74,7 +76,11 @@ export default function AzimuthLogo3D() {
   });
 
   return (
-    <group ref={groupRef} position={[0, 0, -0.2]}>
+    <group
+      ref={groupRef}
+      position={[0, 0, -0.2]}
+      onPointerDown={(e) => { e.stopPropagation(); goTo('lifecycle'); }}
+    >
       {/* Crystalline cyan A body */}
       <mesh geometry={aGeometry}>
         <meshPhysicalMaterial

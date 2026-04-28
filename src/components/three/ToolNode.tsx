@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useMemo } from 'react';
+import { useRef, useMemo, useLayoutEffect, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Html } from '@react-three/drei';
 import * as THREE from 'three';
@@ -19,6 +19,8 @@ interface ToolNodeProps {
   label: string;
   subtitle: string;
   position: [number, number, number];
+  lifecyclePosition: [number, number, number];
+  lifecycleMode: boolean;
   onSelect: () => void;
   isActive: boolean;
   /** Per-node rotation character. Defaults to 'y' */
@@ -148,6 +150,8 @@ export default function ToolNode({
   label,
   subtitle,
   position,
+  lifecyclePosition,
+  lifecycleMode,
   onSelect,
   isActive,
   rotationAxis = 'y',
@@ -160,6 +164,22 @@ export default function ToolNode({
   // Shared geometry between body and edges
   const nodeGeometry = useMemo(() => createNodeGeometry(geometry), [geometry]);
 
+  // Position lerp — target switches between cardinal and lifecycle timeline positions
+  const lerpTarget = useRef(new THREE.Vector3(...position));
+
+  // Initialize group position synchronously before first canvas frame
+  useLayoutEffect(() => {
+    if (groupRef.current) {
+      groupRef.current.position.set(...position);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Update lerp target when lifecycle mode changes
+  useEffect(() => {
+    const target = lifecycleMode ? lifecyclePosition : position;
+    lerpTarget.current.set(...target);
+  }, [lifecycleMode]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Animation state refs
   const isHovered = useRef(false);
   const currentScale = useRef(1.0);
@@ -170,6 +190,11 @@ export default function ToolNode({
   const elapsedTime = useRef(0);
 
   useFrame((_, delta) => {
+    // Animate group position toward the current layout target
+    if (groupRef.current) {
+      groupRef.current.position.lerp(lerpTarget.current, 0.05);
+    }
+
     if (!meshRef.current || !materialRef.current) return;
     elapsedTime.current += delta;
 
@@ -226,7 +251,6 @@ export default function ToolNode({
   return (
     <group
       ref={groupRef}
-      position={position}
       onPointerOver={(e) => {
         e.stopPropagation();
         isHovered.current = true;

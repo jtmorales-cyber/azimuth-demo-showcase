@@ -12,6 +12,15 @@ export const NODE_POSITIONS = {
   scout: new THREE.Vector3(0,  0, -8),
 } as const;
 
+// Lifecycle Overview layout — horizontal timeline spread along the X axis.
+// Nodes animate to these positions when currentScene === 'lifecycle'.
+export const TIMELINE_POSITIONS = {
+  maps:  new THREE.Vector3(-9, -1, 0),
+  kit:   new THREE.Vector3(-3, -1, 0),
+  base:  new THREE.Vector3( 3, -1, 0),
+  scout: new THREE.Vector3( 9, -1, 0),
+} as const;
+
 // ---------------------------------------------------------------------------
 // Per-scene camera focus points
 // Each defines where the camera should be and what it should look at.
@@ -40,6 +49,11 @@ export const SCENE_FOCUS: Record<SceneName, SceneFocus> = {
   hub: {
     position: [0, 3, 20],
     target:   [0, 0, 0],
+  },
+  lifecycle: {
+    // Pull back further to frame the horizontal timeline at y=-1
+    position: [0, 2, 22] as [number, number, number],
+    target:   [0, -1,  0] as [number, number, number],
   },
   maps: {
     position: nodeApproachCam(NODE_POSITIONS.maps),

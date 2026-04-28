@@ -6,7 +6,7 @@ import { subscribeWithSelector } from 'zustand/middleware';
 // Types
 // ---------------------------------------------------------------------------
 
-export type SceneName = 'boot' | 'hub' | 'maps' | 'kit' | 'base' | 'scout';
+export type SceneName = 'boot' | 'hub' | 'maps' | 'kit' | 'base' | 'scout' | 'lifecycle';
 export type HoverTarget = 'maps' | 'kit' | 'base' | 'scout' | null;
 
 export interface PortalState {

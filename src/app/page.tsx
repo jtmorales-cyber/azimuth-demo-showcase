@@ -15,7 +15,8 @@ const NOVAHub      = dynamic(() => import('@/scenes/NOVAHub'),       { ssr: fals
 const MAPSShowcase = dynamic(() => import('@/scenes/MAPSShowcase'),  { ssr: false });
 const KITShowcase  = dynamic(() => import('@/scenes/KITShowcase'),   { ssr: false });
 const BASEShowcase = dynamic(() => import('@/scenes/BASEShowcase'),  { ssr: false });
-const SCOUTShowcase = dynamic(() => import('@/scenes/SCOUTShowcase'), { ssr: false });
+const SCOUTShowcase     = dynamic(() => import('@/scenes/SCOUTShowcase'),     { ssr: false });
+const LifecycleOverview = dynamic(() => import('@/scenes/LifecycleOverview'), { ssr: false });
 
 export default function Home() {
   useKioskMode();
@@ -41,6 +42,7 @@ export default function Home() {
       <KITShowcase />
       <BASEShowcase />
       <SCOUTShowcase />
+      <LifecycleOverview />
     </>
   );
 }

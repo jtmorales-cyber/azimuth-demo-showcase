@@ -16,6 +16,7 @@ type ToolNode = 'maps' | 'kit' | 'base' | 'scout';
 interface CompassRingProps {
   activeNode?: ToolNode | null;
   radius?: number;
+  visible?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -141,7 +142,9 @@ function DegreeLabels({ radius }: { radius: number }) {
 export default function CompassRing({
   activeNode = null,
   radius = 8,
+  visible = true,
 }: CompassRingProps) {
+  if (!visible) return null;
   const outerGroupRef = useRef<THREE.Group>(null);
   const middleRef = useRef<THREE.Mesh>(null);
   const innerRef = useRef<THREE.Mesh>(null);

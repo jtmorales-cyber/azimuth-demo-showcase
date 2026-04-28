@@ -17,7 +17,7 @@ import AzimuthLogo3D from './AzimuthLogo3D';
 import CompassRing from './CompassRing';
 import ToolNode from './ToolNode';
 import CameraController from '@/camera/CameraController';
-import { NODE_POSITIONS } from '@/camera/flightPaths';
+import { NODE_POSITIONS, TIMELINE_POSITIONS } from '@/camera/flightPaths';
 import { COLORS } from '@/utils/constants';
 import { usePortalStore, type SceneName } from '@/state/portalStore';
 
@@ -36,15 +36,28 @@ function SceneSetup() {
 // Only visible during hub and showcase scenes via SceneGroup
 // ---------------------------------------------------------------------------
 
-const HUB_SCENES: SceneName[] = ['hub', 'maps', 'kit', 'base', 'scout'];
+const HUB_SCENES: SceneName[] = ['hub', 'maps', 'kit', 'base', 'scout', 'lifecycle'];
 
 // Stable Vector2 instance — avoids new allocation on every render
 const ZERO_OFFSET = new Vector2(0, 0);
+
+// Stable tuples for ToolNode position props — avoids new array refs on each render
+// which would fight the useFrame lerp inside ToolNode.
+const MAPS_POS:  [number, number, number] = [NODE_POSITIONS.maps.x,  NODE_POSITIONS.maps.y,  NODE_POSITIONS.maps.z];
+const KIT_POS:   [number, number, number] = [NODE_POSITIONS.kit.x,   NODE_POSITIONS.kit.y,   NODE_POSITIONS.kit.z];
+const BASE_POS:  [number, number, number] = [NODE_POSITIONS.base.x,  NODE_POSITIONS.base.y,  NODE_POSITIONS.base.z];
+const SCOUT_POS: [number, number, number] = [NODE_POSITIONS.scout.x, NODE_POSITIONS.scout.y, NODE_POSITIONS.scout.z];
+
+const MAPS_LIFE:  [number, number, number] = [TIMELINE_POSITIONS.maps.x,  TIMELINE_POSITIONS.maps.y,  TIMELINE_POSITIONS.maps.z];
+const KIT_LIFE:   [number, number, number] = [TIMELINE_POSITIONS.kit.x,   TIMELINE_POSITIONS.kit.y,   TIMELINE_POSITIONS.kit.z];
+const BASE_LIFE:  [number, number, number] = [TIMELINE_POSITIONS.base.x,  TIMELINE_POSITIONS.base.y,  TIMELINE_POSITIONS.base.z];
+const SCOUT_LIFE: [number, number, number] = [TIMELINE_POSITIONS.scout.x, TIMELINE_POSITIONS.scout.y, TIMELINE_POSITIONS.scout.z];
 
 function HubWorld() {
   const hoveredNode = usePortalStore((s) => s.hoveredNode);
   const goTo = usePortalStore((s) => s.goTo);
   const currentScene = usePortalStore((s) => s.currentScene);
+  const isLifecycle = currentScene === 'lifecycle';
 
   const selectNode = useCallback(
     (scene: SceneName) => { goTo(scene); },
@@ -54,21 +67,21 @@ function HubWorld() {
   return (
     <SceneGroup scenes={HUB_SCENES}>
       <AzimuthLogo3D />
-      <CompassRing radius={8} activeNode={hoveredNode} />
+      <CompassRing radius={8} activeNode={hoveredNode} visible={!isLifecycle} />
       <ToolNode geometry="dodeca" color={COLORS.AMBER_CORE} label="MAPS" subtitle="Pre-Enlistment"
-        position={[NODE_POSITIONS.maps.x, NODE_POSITIONS.maps.y, NODE_POSITIONS.maps.z]}
+        position={MAPS_POS} lifecyclePosition={MAPS_LIFE} lifecycleMode={isLifecycle}
         onSelect={() => selectNode('maps')} isActive={currentScene === 'maps'}
         rotationAxis="y" />
       <ToolNode geometry="cube" color={COLORS.CYAN_STRUCT} label="K.I.T." subtitle="Active Duty"
-        position={[NODE_POSITIONS.kit.x, NODE_POSITIONS.kit.y, NODE_POSITIONS.kit.z]}
+        position={KIT_POS} lifecyclePosition={KIT_LIFE} lifecycleMode={isLifecycle}
         onSelect={() => selectNode('kit')} isActive={currentScene === 'kit'}
         rotationAxis="xy" />
       <ToolNode geometry="sphere" color={COLORS.CALM_PURPLE} label="BASE" subtitle="Wellness"
-        position={[NODE_POSITIONS.base.x, NODE_POSITIONS.base.y, NODE_POSITIONS.base.z]}
+        position={BASE_POS} lifecyclePosition={BASE_LIFE} lifecycleMode={isLifecycle}
         onSelect={() => selectNode('base')} isActive={currentScene === 'base'}
         rotationAxis="none" />
       <ToolNode geometry="octa" color={COLORS.SCOUT_BLUE} label="SCOUT" subtitle="Claims"
-        position={[NODE_POSITIONS.scout.x, NODE_POSITIONS.scout.y, NODE_POSITIONS.scout.z]}
+        position={SCOUT_POS} lifecyclePosition={SCOUT_LIFE} lifecycleMode={isLifecycle}
         onSelect={() => selectNode('scout')} isActive={currentScene === 'scout'}
         rotationAxis="yz" />
     </SceneGroup>

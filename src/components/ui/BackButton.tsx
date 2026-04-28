@@ -2,7 +2,7 @@
 
 import { usePortalStore } from '@/state/portalStore';
 
-const SANCTUARY_SCENES = new Set(['maps', 'kit', 'base', 'scout']);
+const SANCTUARY_SCENES = new Set(['maps', 'kit', 'base', 'scout', 'lifecycle']);
 
 export default function BackButton() {
   const currentScene = usePortalStore((s) => s.currentScene);

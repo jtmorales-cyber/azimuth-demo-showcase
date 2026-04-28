@@ -117,7 +117,65 @@ export default function KITShowcase() {
             </div>
           </GlassPanel>
 
-          {/* Card 3: The Outcome (After) */}
+          {/* Card 3: Corporal Davis — SkillBridge proof point */}
+          <GlassPanel size="full" tiltOnTouch>
+            <div className="space-y-lg p-md">
+              <ToolTitle name="K.I.T." />
+              <div
+                className="font-inter font-medium tracking-wider uppercase"
+                style={{ color: 'var(--amber-core)', fontSize: 'var(--text-caption)' }}
+              >
+                In the Field
+              </div>
+              <h2
+                className="font-satoshi font-bold"
+                style={{
+                  fontSize: 'var(--text-h2)',
+                  lineHeight: 1.2,
+                  color: 'var(--peak-light)',
+                }}
+              >
+                The Alert That Built a Post-Service Career
+              </h2>
+              <div
+                className="font-inter"
+                style={{
+                  borderLeft: '3px solid var(--amber-core)',
+                  backgroundColor: 'rgba(232, 160, 48, 0.08)',
+                  padding: '12px 16px',
+                  borderRadius: '0 8px 8px 0',
+                  lineHeight: 1.6,
+                  color: 'var(--silver)',
+                  fontSize: 'var(--text-body)',
+                  fontStyle: 'italic',
+                }}
+              >
+                &ldquo;New opportunity detected — direct alignment with your Master
+                Electrician goal. Action required: PFT within 30 days.&rdquo;
+              </div>
+              <p
+                className="font-inter"
+                style={{
+                  fontSize: 'var(--text-caption)',
+                  lineHeight: 1.6,
+                  color: 'var(--silver)',
+                }}
+              >
+                Corporal Davis — Marine, 5 years in. The SkillBridge opportunity was
+                on page 23 of a 41-page MARADMIN. K.I.T. surfaced it, cross-referenced
+                it against his career roadmap, flagged a PFT eligibility gap, and
+                handed him a concrete action before the window closed. Not storage.
+                Not search. Routing.
+              </p>
+              <div className="pt-sm">
+                <FeatureRow title="SkillBridge eligibility surfaced automatically" />
+                <FeatureRow title="PFT gap flagged before the window closed" />
+                <FeatureRow title="Career roadmap cross-referenced in real-time" />
+              </div>
+            </div>
+          </GlassPanel>
+
+          {/* Card 4: The Outcome (After) */}
           <GlassPanel size="full" tiltOnTouch>
             <div className="space-y-lg p-md">
               <ToolTitle name="K.I.T." />
@@ -154,7 +212,7 @@ export default function KITShowcase() {
             </div>
           </GlassPanel>
 
-          {/* Card 4: NOVA's Take */}
+          {/* Card 5: NOVA's Take */}
           <GlassPanel size="full" tiltOnTouch>
             <div className="space-y-lg p-md">
               <ToolTitle name="K.I.T." />
