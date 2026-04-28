@@ -53,6 +53,12 @@ const KIT_LIFE:   [number, number, number] = [TIMELINE_POSITIONS.kit.x,   TIMELI
 const BASE_LIFE:  [number, number, number] = [TIMELINE_POSITIONS.base.x,  TIMELINE_POSITIONS.base.y,  TIMELINE_POSITIONS.base.z];
 const SCOUT_LIFE: [number, number, number] = [TIMELINE_POSITIONS.scout.x, TIMELINE_POSITIONS.scout.y, TIMELINE_POSITIONS.scout.z];
 
+// Per-tool lifecycle copy (storyboard S4 value props)
+const MAPS_COPY  = 'Find your path before you commit';
+const KIT_COPY   = 'Track, grow, and own your career in real-time';
+const BASE_COPY  = "A safe space that's always there";
+const SCOUT_COPY = 'Get what you earned — optimized, fast, confident';
+
 function HubWorld() {
   const hoveredNode = usePortalStore((s) => s.hoveredNode);
   const goTo = usePortalStore((s) => s.goTo);
@@ -70,18 +76,22 @@ function HubWorld() {
       <CompassRing radius={8} activeNode={hoveredNode} visible={!isLifecycle} />
       <ToolNode geometry="dodeca" color={COLORS.AMBER_CORE} label="MAPS" subtitle="Pre-Enlistment"
         position={MAPS_POS} lifecyclePosition={MAPS_LIFE} lifecycleMode={isLifecycle}
+        lifecycleCopy={MAPS_COPY}
         onSelect={() => selectNode('maps')} isActive={currentScene === 'maps'}
         rotationAxis="y" />
       <ToolNode geometry="cube" color={COLORS.CYAN_STRUCT} label="K.I.T." subtitle="Active Duty"
         position={KIT_POS} lifecyclePosition={KIT_LIFE} lifecycleMode={isLifecycle}
+        lifecycleCopy={KIT_COPY}
         onSelect={() => selectNode('kit')} isActive={currentScene === 'kit'}
         rotationAxis="xy" />
       <ToolNode geometry="sphere" color={COLORS.CALM_PURPLE} label="BASE" subtitle="Wellness"
         position={BASE_POS} lifecyclePosition={BASE_LIFE} lifecycleMode={isLifecycle}
+        lifecycleCopy={BASE_COPY}
         onSelect={() => selectNode('base')} isActive={currentScene === 'base'}
         rotationAxis="none" />
       <ToolNode geometry="octa" color={COLORS.SCOUT_BLUE} label="SCOUT" subtitle="Claims"
         position={SCOUT_POS} lifecyclePosition={SCOUT_LIFE} lifecycleMode={isLifecycle}
+        lifecycleCopy={SCOUT_COPY}
         onSelect={() => selectNode('scout')} isActive={currentScene === 'scout'}
         rotationAxis="yz" />
     </SceneGroup>

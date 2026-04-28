@@ -21,6 +21,7 @@ interface ToolNodeProps {
   position: [number, number, number];
   lifecyclePosition: [number, number, number];
   lifecycleMode: boolean;
+  lifecycleCopy: string;
   onSelect: () => void;
   isActive: boolean;
   /** Per-node rotation character. Defaults to 'y' */
@@ -152,6 +153,7 @@ export default function ToolNode({
   position,
   lifecyclePosition,
   lifecycleMode,
+  lifecycleCopy,
   onSelect,
   isActive,
   rotationAxis = 'y',
@@ -187,6 +189,7 @@ export default function ToolNode({
   // hoverState: smooth 0..1 ref that drives the label fade-in.
   const hoverState = useRef(0);
   const labelOpacity = useRef(0);
+  const lifecycleLabelOpacity = useRef(0);
   const elapsedTime = useRef(0);
 
   useFrame((_, delta) => {
@@ -244,8 +247,13 @@ export default function ToolNode({
     currentEmissive.current += (targetEmissive - currentEmissive.current) * 0.1;
     materialRef.current.emissiveIntensity = currentEmissive.current;
 
-    // --- Label opacity follows hoverState ---
-    labelOpacity.current = hoverState.current;
+    // --- Lifecycle label fade — visible only when lifecycleMode is active ---
+    const targetLifecycleOpacity = lifecycleMode ? 1.0 : 0.0;
+    lifecycleLabelOpacity.current +=
+      (targetLifecycleOpacity - lifecycleLabelOpacity.current) * 0.08;
+
+    // --- Hover label suppressed while lifecycle label is visible ---
+    labelOpacity.current = lifecycleMode ? 0 : hoverState.current;
   });
 
   return (
@@ -340,6 +348,70 @@ export default function ToolNode({
             }}
           >
             {subtitle}
+          </span>
+        </div>
+      </Html>
+
+      {/* Lifecycle label — sits below the node when scene === 'lifecycle' */}
+      <Html
+        position={[0, -2.4, 0]}
+        center
+        style={{
+          opacity: lifecycleLabelOpacity.current,
+          transition: 'none',
+          pointerEvents: 'none',
+          userSelect: 'none',
+        }}
+        distanceFactor={9}
+      >
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 4,
+            width: 240,
+          }}
+        >
+          <span
+            style={{
+              fontFamily: 'Inter, IBM Plex Sans, system-ui, sans-serif',
+              fontWeight: 500,
+              fontSize: 10,
+              color: '#526A82',
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+              textShadow: '0 1px 4px rgba(0,0,0,0.7)',
+            }}
+          >
+            {subtitle}
+          </span>
+          <span
+            style={{
+              fontFamily: 'Satoshi, DM Sans, system-ui, sans-serif',
+              fontWeight: 900,
+              fontSize: 22,
+              color: '#FFFFFF',
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              textShadow: '0 1px 8px rgba(0,0,0,0.85)',
+            }}
+          >
+            {label}
+          </span>
+          <span
+            style={{
+              fontFamily: 'Space Grotesk, Inter, system-ui, sans-serif',
+              fontWeight: 300,
+              fontStyle: 'italic',
+              fontSize: 13,
+              color: '#D8DEE9',
+              textShadow: '0 1px 4px rgba(0,0,0,0.7)',
+              textAlign: 'center',
+              lineHeight: 1.4,
+            }}
+          >
+            {lifecycleCopy}
           </span>
         </div>
       </Html>
