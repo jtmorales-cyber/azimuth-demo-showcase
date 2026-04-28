@@ -5,6 +5,7 @@ import IdleOverlay from '@/components/ui/IdleOverlay';
 import BackButton from '@/components/ui/BackButton';
 import { useIdleTimeout } from '@/hooks/useIdleTimeout';
 import { useKioskMode } from '@/hooks/useKioskMode';
+import { useAudioOrchestrator } from '@/hooks/useAudioOrchestrator';
 
 // R3F canvas — client-only
 const Scene = dynamic(() => import('@/components/three/Scene'), { ssr: false });
@@ -21,6 +22,7 @@ const LifecycleOverview = dynamic(() => import('@/scenes/LifecycleOverview'), { 
 export default function Home() {
   useKioskMode();
   useIdleTimeout();
+  useAudioOrchestrator();
 
   return (
     <>

@@ -5,6 +5,7 @@ import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { COLORS } from '@/utils/constants';
 import { usePortalStore } from '@/state/portalStore';
+import { getAudioEngine } from '@/audio/AudioEngine';
 
 // ---------------------------------------------------------------------------
 // AzimuthLogo3D — replaces the legacy NOVASphere at the hub center.
@@ -79,7 +80,11 @@ export default function AzimuthLogo3D() {
     <group
       ref={groupRef}
       position={[0, 0, -0.2]}
-      onPointerDown={(e) => { e.stopPropagation(); goTo('lifecycle'); }}
+      onPointerDown={(e) => {
+        e.stopPropagation();
+        getAudioEngine().playInteraction('hub');
+        goTo('lifecycle');
+      }}
     >
       {/* Crystalline cyan A body */}
       <mesh geometry={aGeometry}>

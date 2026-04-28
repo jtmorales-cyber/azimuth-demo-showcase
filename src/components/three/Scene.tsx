@@ -20,6 +20,7 @@ import CameraController from '@/camera/CameraController';
 import { NODE_POSITIONS, TIMELINE_POSITIONS } from '@/camera/flightPaths';
 import { COLORS } from '@/utils/constants';
 import { usePortalStore, type SceneName } from '@/state/portalStore';
+import { getAudioEngine } from '@/audio/AudioEngine';
 
 // ---------------------------------------------------------------------------
 // Scene setup
@@ -66,7 +67,10 @@ function HubWorld() {
   const isLifecycle = currentScene === 'lifecycle';
 
   const selectNode = useCallback(
-    (scene: SceneName) => { goTo(scene); },
+    (scene: SceneName) => {
+      getAudioEngine().playInteraction('hub');
+      goTo(scene);
+    },
     [goTo]
   );
 

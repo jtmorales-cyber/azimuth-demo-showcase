@@ -1,6 +1,8 @@
 'use client';
 
 import { Children, useRef, useState, useCallback, useEffect, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
+import { usePortalStore } from '@/state/portalStore';
+import { getAudioEngine } from '@/audio/AudioEngine';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -61,6 +63,7 @@ export default function SwipeCarousel({
     if (clamped !== activeIndex) {
       setActiveIndex(clamped);
       onIndexChange?.(clamped);
+      getAudioEngine().playInteraction(usePortalStore.getState().currentScene);
     }
   }, [activeIndex, childCount, onIndexChange]);
 
