@@ -1,13 +1,13 @@
 'use client';
 
-import { useRef, useState, useCallback, useEffect, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
+import { Children, useRef, useState, useCallback, useEffect, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
 interface SwipeCarouselProps {
-  children: ReactNode[];
+  children: ReactNode | ReactNode[];
   onIndexChange?: (index: number) => void;
   /**
    * Fired when the user taps (not swipes) the last card.
@@ -42,7 +42,9 @@ export default function SwipeCarousel({
   const containerRef = useRef<HTMLDivElement>(null);
   const pointerStart = useRef<{ x: number; y: number; t: number } | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
-  const childCount = children.length;
+  // Normalize single child / array uniformly
+  const childArray = Children.toArray(children);
+  const childCount = childArray.length;
 
   // Track scroll position to determine active index
   const handleScroll = useCallback(() => {
@@ -129,7 +131,7 @@ export default function SwipeCarousel({
         <style>{`
           .carousel-scroll::-webkit-scrollbar { display: none; }
         `}</style>
-        {children.map((child, i) => (
+        {childArray.map((child, i) => (
           <div
             key={i}
             className="carousel-scroll w-full flex-shrink-0"
@@ -146,7 +148,7 @@ export default function SwipeCarousel({
       {/* Dot indicators */}
       {showDots && childCount > 1 && (
         <div className="flex justify-center items-center gap-3 mt-lg py-sm">
-          {children.map((_, i) => {
+          {childArray.map((_, i) => {
             const isActive = i === activeIndex;
             return (
               <button

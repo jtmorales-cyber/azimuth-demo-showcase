@@ -2,6 +2,7 @@
 
 import { motion } from 'motion/react';
 import { usePortalStore } from '@/state/portalStore';
+import SwipeCarousel from '@/components/ui/SwipeCarousel';
 import GlassPanel from '@/components/ui/GlassPanel';
 import NOVANarration from '@/components/ui/NOVANarration';
 
@@ -13,7 +14,8 @@ import NOVANarration from '@/components/ui/NOVANarration';
  * platform lifecycle arc: Pre-Enlistment → Active Duty → Wellness → Claims.
  *
  * Content verbatim from storyboard.md S4.
- * BackButton (global) dismisses → returns to hub.
+ * Tap the card → returns to hub (matches SwipeCarousel pattern in showcases).
+ * BackButton (global) also returns to hub.
  */
 
 const LIFECYCLE_PHASES = [
@@ -41,6 +43,7 @@ const LIFECYCLE_PHASES = [
 
 export default function LifecycleOverview() {
   const currentScene = usePortalStore((s) => s.currentScene);
+  const goTo = usePortalStore((s) => s.goTo);
 
   if (currentScene !== 'lifecycle') return null;
 
@@ -50,7 +53,8 @@ export default function LifecycleOverview() {
       style={{ touchAction: 'pan-y' }}
     >
       <div className="w-full max-w-2xl px-lg">
-        <GlassPanel size="full" tiltOnTouch>
+        <SwipeCarousel onLastCardTap={() => goTo('hub')} showDots={false}>
+          <GlassPanel size="full" tiltOnTouch>
           <div className="space-y-lg p-md">
             {/* Eyebrow */}
             <div
@@ -159,7 +163,8 @@ export default function LifecycleOverview() {
               typing
             />
           </div>
-        </GlassPanel>
+          </GlassPanel>
+        </SwipeCarousel>
       </div>
     </div>
   );
