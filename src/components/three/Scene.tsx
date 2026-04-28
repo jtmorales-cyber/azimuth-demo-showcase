@@ -1,8 +1,7 @@
 'use client';
 
-import { useEffect, useCallback, useRef } from 'react';
-import { Canvas, useThree, useFrame } from '@react-three/fiber';
-import * as THREE from 'three';
+import { useEffect, useCallback } from 'react';
+import { Canvas, useThree } from '@react-three/fiber';
 import {
   EffectComposer,
   Bloom,
@@ -10,19 +9,18 @@ import {
   ToneMapping,
   ChromaticAberration,
 } from '@react-three/postprocessing';
-import { ToneMappingMode, BlendFunction, ChromaticAberrationEffect } from 'postprocessing';
+import { ToneMappingMode, BlendFunction } from 'postprocessing';
 import { Vector2 } from 'three';
 import SceneGroup from './SceneGroup';
-import BootSequence3D from './BootSequence3D';
 import DepthGrid from './DepthGrid';
-import GauntletGeometry from './GauntletGeometry';
-import NOVASphere from './NOVASphere';
+import AzimuthLogo3D from './AzimuthLogo3D';
 import CompassRing from './CompassRing';
 import ToolNode from './ToolNode';
 import CameraController from '@/camera/CameraController';
-import { NODE_POSITIONS } from '@/camera/flightPaths';
+import { NODE_POSITIONS, TIMELINE_POSITIONS } from '@/camera/flightPaths';
 import { COLORS } from '@/utils/constants';
 import { usePortalStore, type SceneName } from '@/state/portalStore';
+import { getAudioEngine } from '@/audio/AudioEngine';
 
 // ---------------------------------------------------------------------------
 // Scene setup
@@ -39,36 +37,65 @@ function SceneSetup() {
 // Only visible during hub and showcase scenes via SceneGroup
 // ---------------------------------------------------------------------------
 
-const HUB_SCENES: SceneName[] = ['hub', 'maps', 'kit', 'base', 'scout', 'impact', 'closing'];
+const HUB_SCENES: SceneName[] = ['hub', 'maps', 'kit', 'base', 'scout', 'lifecycle'];
+
+// Stable Vector2 instance — avoids new allocation on every render
+const ZERO_OFFSET = new Vector2(0, 0);
+
+// Stable tuples for ToolNode position props — avoids new array refs on each render
+// which would fight the useFrame lerp inside ToolNode.
+const MAPS_POS:  [number, number, number] = [NODE_POSITIONS.maps.x,  NODE_POSITIONS.maps.y,  NODE_POSITIONS.maps.z];
+const KIT_POS:   [number, number, number] = [NODE_POSITIONS.kit.x,   NODE_POSITIONS.kit.y,   NODE_POSITIONS.kit.z];
+const BASE_POS:  [number, number, number] = [NODE_POSITIONS.base.x,  NODE_POSITIONS.base.y,  NODE_POSITIONS.base.z];
+const SCOUT_POS: [number, number, number] = [NODE_POSITIONS.scout.x, NODE_POSITIONS.scout.y, NODE_POSITIONS.scout.z];
+
+const MAPS_LIFE:  [number, number, number] = [TIMELINE_POSITIONS.maps.x,  TIMELINE_POSITIONS.maps.y,  TIMELINE_POSITIONS.maps.z];
+const KIT_LIFE:   [number, number, number] = [TIMELINE_POSITIONS.kit.x,   TIMELINE_POSITIONS.kit.y,   TIMELINE_POSITIONS.kit.z];
+const BASE_LIFE:  [number, number, number] = [TIMELINE_POSITIONS.base.x,  TIMELINE_POSITIONS.base.y,  TIMELINE_POSITIONS.base.z];
+const SCOUT_LIFE: [number, number, number] = [TIMELINE_POSITIONS.scout.x, TIMELINE_POSITIONS.scout.y, TIMELINE_POSITIONS.scout.z];
+
+// Per-tool lifecycle copy (storyboard S4 value props)
+const MAPS_COPY  = 'Find your path before you commit';
+const KIT_COPY   = 'Track, grow, and own your career in real-time';
+const BASE_COPY  = "A safe space that's always there";
+const SCOUT_COPY = 'Get what you earned — optimized, fast, confident';
 
 function HubWorld() {
   const hoveredNode = usePortalStore((s) => s.hoveredNode);
-  const setScene = usePortalStore((s) => s.setScene);
+  const goTo = usePortalStore((s) => s.goTo);
   const currentScene = usePortalStore((s) => s.currentScene);
+  const isLifecycle = currentScene === 'lifecycle';
 
   const selectNode = useCallback(
-    (scene: SceneName) => { setScene(scene); },
-    [setScene]
+    (scene: SceneName) => {
+      getAudioEngine().playInteraction('hub');
+      goTo(scene);
+    },
+    [goTo]
   );
 
   return (
     <SceneGroup scenes={HUB_SCENES}>
-      <NOVASphere position={[0, 0, 0]} />
-      <CompassRing radius={8} activeNode={hoveredNode} />
+      <AzimuthLogo3D />
+      <CompassRing radius={8} activeNode={hoveredNode} visible={!isLifecycle} />
       <ToolNode geometry="dodeca" color={COLORS.AMBER_CORE} label="MAPS" subtitle="Pre-Enlistment"
-        position={[NODE_POSITIONS.maps.x, NODE_POSITIONS.maps.y, NODE_POSITIONS.maps.z]}
+        position={MAPS_POS} lifecyclePosition={MAPS_LIFE} lifecycleMode={isLifecycle}
+        lifecycleCopy={MAPS_COPY}
         onSelect={() => selectNode('maps')} isActive={currentScene === 'maps'}
         rotationAxis="y" />
       <ToolNode geometry="cube" color={COLORS.CYAN_STRUCT} label="K.I.T." subtitle="Active Duty"
-        position={[NODE_POSITIONS.kit.x, NODE_POSITIONS.kit.y, NODE_POSITIONS.kit.z]}
+        position={KIT_POS} lifecyclePosition={KIT_LIFE} lifecycleMode={isLifecycle}
+        lifecycleCopy={KIT_COPY}
         onSelect={() => selectNode('kit')} isActive={currentScene === 'kit'}
         rotationAxis="xy" />
       <ToolNode geometry="sphere" color={COLORS.CALM_PURPLE} label="BASE" subtitle="Wellness"
-        position={[NODE_POSITIONS.base.x, NODE_POSITIONS.base.y, NODE_POSITIONS.base.z]}
+        position={BASE_POS} lifecyclePosition={BASE_LIFE} lifecycleMode={isLifecycle}
+        lifecycleCopy={BASE_COPY}
         onSelect={() => selectNode('base')} isActive={currentScene === 'base'}
         rotationAxis="none" />
       <ToolNode geometry="octa" color={COLORS.SCOUT_BLUE} label="SCOUT" subtitle="Claims"
-        position={[NODE_POSITIONS.scout.x, NODE_POSITIONS.scout.y, NODE_POSITIONS.scout.z]}
+        position={SCOUT_POS} lifecyclePosition={SCOUT_LIFE} lifecycleMode={isLifecycle}
+        lifecycleCopy={SCOUT_COPY}
         onSelect={() => selectNode('scout')} isActive={currentScene === 'scout'}
         rotationAxis="yz" />
     </SceneGroup>
@@ -77,11 +104,6 @@ function HubWorld() {
 
 // ---------------------------------------------------------------------------
 // Main Scene
-// Each component handles its own visibility via return null pattern:
-//   BootSequence3D:  returns null when currentScene !== 'boot'
-//   GauntletGeometry: returns null when currentScene !== 'gauntlet'
-//   HubWorld: uses SceneGroup for hub/showcase scenes
-//   DepthGrid: internal scene check
 // ---------------------------------------------------------------------------
 
 export default function Scene() {
@@ -89,6 +111,7 @@ export default function Scene() {
     <Canvas
       camera={{ position: [0, 0, 5], fov: 50 }}
       gl={{ antialias: true, alpha: false }}
+      dpr={[1, 1.5]}
       onCreated={({ gl }) => {
         gl.setClearColor('#0A0E1A');
       }}
@@ -98,98 +121,28 @@ export default function Scene() {
       <CameraController />
       <ambientLight intensity={0.15} />
 
-      {/* BOOT: crystalline A monogram — unmounts when not boot */}
-      <BootSequence3D />
-
-      {/* GAUNTLET: corridors — unmounts when not gauntlet */}
-      <GauntletGeometry />
-
       {/* HUB: NOVA + compass + tool nodes — hidden outside hub scenes */}
       <HubWorld />
 
       {/* DEPTH GRID: internal scene visibility check */}
       <DepthGrid opacity={0.22} color="#00CED1" />
 
-      <DynamicPostprocessing />
+      <EffectComposer>
+        <Bloom
+          luminanceThreshold={0.6}
+          luminanceSmoothing={0.3}
+          intensity={0.8}
+          radius={1.2}
+        />
+        <ChromaticAberration
+          blendFunction={BlendFunction.NORMAL}
+          offset={ZERO_OFFSET}
+          radialModulation={false}
+          modulationOffset={0}
+        />
+        <Vignette darkness={0.4} offset={0.3} />
+        <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
+      </EffectComposer>
     </Canvas>
   );
 }
-
-/**
- * Postprocessing stack (design-system.md §6.4):
- *   - Bloom (radius 1.2, intensity 0.8 default, 1.4 during Impact Wall)
- *   - ChromaticAberration (base offset 0.001, ramps to 0.003 during dissolve)
- *   - Vignette (darkness 0.4, offset 0.3)
- *   - ToneMapping (ACES Filmic)
- *
- * ChromaticAberration is driven by a useFrame hook that reads scroll progress
- * from the store and mutates the effect's offset directly — avoids React
- * re-renders on every frame while still tracking the scroll-driven transition.
- */
-
-// Chromatic aberration disabled — sharp image preferred over lens fringing.
-// Both vectors zeroed so the effect is a no-op. To re-enable, restore
-// BASE to (0.001, 0.001) and PEAK to (0.003, 0.003).
-const ABERRATION_BASE = new Vector2(0, 0);
-const ABERRATION_PEAK = new Vector2(0, 0);
-
-// Dissolve transition scroll range (matches DissolveTransition constants)
-const DISSOLVE_START = 0.15;
-const DISSOLVE_END = 0.30;
-
-function ChromaticAberrationDynamic() {
-  // drei types the ref as `typeof ChromaticAberrationEffect` but the runtime
-  // value is the instance — use `any` and assert the known shape on access.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const aberrationRef = useRef<any>(null);
-
-  useFrame(() => {
-    const effect = aberrationRef.current as ChromaticAberrationEffect | null;
-    if (!effect) return;
-
-    const scroll = usePortalStore.getState().scrollProgress;
-
-    // Triangle-wave envelope: 0 outside range, peaks at midpoint of dissolve
-    let t = 0;
-    if (scroll >= DISSOLVE_START && scroll <= DISSOLVE_END) {
-      const localT = (scroll - DISSOLVE_START) / (DISSOLVE_END - DISSOLVE_START);
-      // Peak at 0.5 (midpoint), fall off to edges
-      t = 1 - Math.abs(localT * 2 - 1);
-    }
-
-    // Lerp between base and peak offsets
-    const x = ABERRATION_BASE.x + (ABERRATION_PEAK.x - ABERRATION_BASE.x) * t;
-    const y = ABERRATION_BASE.y + (ABERRATION_PEAK.y - ABERRATION_BASE.y) * t;
-    effect.offset.set(x, y);
-  });
-
-  return (
-    <ChromaticAberration
-      ref={aberrationRef}
-      blendFunction={BlendFunction.NORMAL}
-      offset={ABERRATION_BASE}
-      radialModulation={false}
-      modulationOffset={0}
-    />
-  );
-}
-
-function DynamicPostprocessing() {
-  const currentScene = usePortalStore((s) => s.currentScene);
-  const bloomIntensity = currentScene === 'impact' ? 1.4 : 0.8;
-
-  return (
-    <EffectComposer>
-      <Bloom
-        luminanceThreshold={0.6}
-        luminanceSmoothing={0.3}
-        intensity={bloomIntensity}
-        radius={1.2}
-      />
-      <ChromaticAberrationDynamic />
-      <Vignette darkness={0.4} offset={0.3} />
-      <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
-    </EffectComposer>
-  );
-}
-

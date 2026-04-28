@@ -47,6 +47,10 @@ export class AudioEngine {
   // Track pending plays that fire before audio is unlocked
   private pendingSceneOnUnlock: SceneAudioKey | null = null;
 
+  // Track the in-progress crossfade so rapid navigation cancels it cleanly
+  private crossfadeIntervalId: ReturnType<typeof setInterval> | null = null;
+  private crossfadingOutScene: LoadedScene | null = null;
+
   /**
    * Initialize the engine and preload all scene audio assets.
    * Safe to call multiple times — only runs once.
@@ -151,6 +155,16 @@ export class AudioEngine {
       return;
     }
 
+    // Cancel any in-progress crossfade and immediately stop its fading-out scene
+    if (this.crossfadeIntervalId !== null) {
+      clearInterval(this.crossfadeIntervalId);
+      this.crossfadeIntervalId = null;
+      if (this.crossfadingOutScene) {
+        this.stopScene(this.crossfadingOutScene);
+        this.crossfadingOutScene = null;
+      }
+    }
+
     const oldScene = this.currentScene ? this.scenes.get(this.currentScene) : null;
     const crossfadeMs = newScene.config.crossfadeMs;
 
@@ -169,6 +183,14 @@ export class AudioEngine {
    * Stop the currently-playing scene.
    */
   stop(sceneKey?: SceneAudioKey): void {
+    if (this.crossfadeIntervalId !== null) {
+      clearInterval(this.crossfadeIntervalId);
+      this.crossfadeIntervalId = null;
+      if (this.crossfadingOutScene) {
+        this.stopScene(this.crossfadingOutScene);
+        this.crossfadingOutScene = null;
+      }
+    }
     const target = sceneKey ?? this.currentScene;
     if (!target) return;
     const scene = this.scenes.get(target);
@@ -186,6 +208,8 @@ export class AudioEngine {
    * crossfade produces with uncorrelated audio sources.
    */
   private crossfade(from: LoadedScene, to: LoadedScene, durationMs: number): void {
+    this.crossfadingOutScene = from;
+
     const fromVolume = from.config.baseVolume * this.masterVolume * (this.isMuted ? 0 : 1);
     const toVolume = to.config.baseVolume * this.masterVolume * (this.isMuted ? 0 : 1);
 
@@ -196,7 +220,7 @@ export class AudioEngine {
     const stepMs = durationMs / steps;
     let currentStep = 0;
 
-    const interval = setInterval(() => {
+    this.crossfadeIntervalId = setInterval(() => {
       currentStep++;
       const t = currentStep / steps;
 
@@ -212,8 +236,9 @@ export class AudioEngine {
       }
 
       if (currentStep >= steps) {
-        clearInterval(interval);
-        // Stop the old scene after fade completes
+        clearInterval(this.crossfadeIntervalId!);
+        this.crossfadeIntervalId = null;
+        this.crossfadingOutScene = null;
         this.stopScene(from);
       }
     }, stepMs);
@@ -232,12 +257,16 @@ export class AudioEngine {
   }
 
   /**
-   * Stop a scene's base layer.
+   * Stop a scene's base layer and any in-flight interaction sound.
+   * Interaction sounds must be stopped explicitly because Howler plays them
+   * fire-and-forget — they outlive scene transitions unless cancelled here.
    */
   private stopScene(scene: LoadedScene): void {
-    if (scene.playId === null) return;
-    scene.base.stop(scene.playId);
-    scene.playId = null;
+    if (scene.playId !== null) {
+      scene.base.stop(scene.playId);
+      scene.playId = null;
+    }
+    scene.interaction?.stop();
   }
 
   /**

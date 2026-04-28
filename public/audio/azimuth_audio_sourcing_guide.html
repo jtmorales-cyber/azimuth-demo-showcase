@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Azimuth Mission Mentor · Audio Sourcing Guide</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    background: #f5f4f0;
+    color: #1a1a18;
+    min-height: 100vh;
+    padding: 2.5rem 1rem;
+    line-height: 1.6;
+  }
+  .doc {
+    max-width: 980px;
+    margin: 0 auto;
+    background: #ffffff;
+    border-radius: 12px;
+    border: 0.5px solid rgba(0,0,0,0.12);
+    padding: 2.5rem 3rem;
+  }
+  .doc-header {
+    border-bottom: 0.5px solid rgba(0,0,0,0.1);
+    padding-bottom: 1.5rem;
+    margin-bottom: 1.75rem;
+  }
+  .doc-eyebrow {
+    font-size: 12px;
+    font-weight: 500;
+    color: #888780;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    margin-bottom: 0.4rem;
+  }
+  .doc-main-title {
+    font-size: 24px;
+    font-weight: 600;
+    color: #1a1a18;
+  }
+  .doc-meta {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 0.9rem;
+  }
+  .meta-pill {
+    font-size: 12px;
+    color: #888780;
+    background: #f5f4f0;
+    border: 0.5px solid rgba(0,0,0,0.1);
+    border-radius: 20px;
+    padding: 3px 11px;
+  }
+  .meta-pill span { color: #1a1a18; font-weight: 500; }
+
+  h2 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1a1a18;
+    margin: 1.85rem 0 0.6rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 0.5px solid rgba(0,0,0,0.08);
+  }
+  h3 {
+    font-size: 14.5px;
+    font-weight: 600;
+    color: #1a1a18;
+    margin: 1.1rem 0 0.4rem;
+  }
+  p { font-size: 14px; color: #2a2a26; margin: 0 0 0.75rem; }
+
+  table { width: 100%; border-collapse: collapse; margin: 0.5rem 0 1rem; font-size: 13px; }
+  th, td {
+    text-align: left; padding: 8px 10px;
+    border-bottom: 0.5px solid rgba(0,0,0,0.08);
+    vertical-align: top;
+  }
+  th {
+    font-size: 11px; font-weight: 500; color: #888780;
+    letter-spacing: 0.05em; text-transform: uppercase;
+    background: #fafaf6; border-bottom: 0.5px solid rgba(0,0,0,0.12);
+  }
+
+  .file-card {
+    border: 0.5px solid rgba(0,0,0,0.12);
+    border-radius: 8px;
+    padding: 1.1rem 1.3rem;
+    margin: 1rem 0;
+    background: #fdfcf9;
+  }
+  .file-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 8px;
+    border-bottom: 0.5px solid rgba(0,0,0,0.1);
+    padding-bottom: 0.55rem;
+    margin-bottom: 0.7rem;
+  }
+  .file-name {
+    font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;
+    font-size: 14px;
+    color: #185FA5;
+    font-weight: 600;
+  }
+  .file-purpose {
+    font-size: 12px;
+    color: #888780;
+    font-style: italic;
+  }
+  .file-spec {
+    font-size: 11px;
+    color: #888780;
+    letter-spacing: 0.04em;
+  }
+
+  .pick {
+    margin: 0.55rem 0;
+    padding: 0.55rem 0.75rem;
+    background: #ffffff;
+    border-left: 2px solid transparent;
+    border-radius: 0 4px 4px 0;
+    font-size: 13px;
+  }
+  .pick.primary {
+    border-left-color: #4A8E6E;
+    background: #F2FAF6;
+  }
+  .pick.backup {
+    border-left-color: #888780;
+    background: #fafaf6;
+  }
+  .pick-label {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    padding: 1px 7px;
+    border-radius: 3px;
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+  .pick-label.primary {
+    background: #4A8E6E;
+    color: #ffffff;
+  }
+  .pick-label.backup {
+    background: #888780;
+    color: #ffffff;
+  }
+  .pick-title {
+    font-weight: 600;
+    color: #1a1a18;
+    font-size: 13px;
+  }
+  .pick-meta {
+    color: #888780;
+    font-size: 12px;
+    margin-left: 4px;
+  }
+  .pick-url {
+    font-family: 'SF Mono', Monaco, monospace;
+    font-size: 11.5px;
+    word-break: break-all;
+  }
+  .pick-url a {
+    color: #185FA5;
+    text-decoration: none;
+  }
+  .pick-url a:hover {
+    text-decoration: underline;
+  }
+  .pick-rationale {
+    margin-top: 5px;
+    color: #444;
+    font-size: 12.5px;
+    font-style: italic;
+  }
+
+  .callout {
+    margin: 1rem 0;
+    padding: 0.85rem 1.05rem;
+    border: 0.5px solid #4A8E6E;
+    background: #E1F5EE;
+    border-radius: 6px;
+    font-size: 13.5px;
+  }
+  .callout strong { color: #085041; }
+  .callout.warn {
+    border-color: #C9892C;
+    background: #FAF1DD;
+  }
+  .callout.warn strong { color: #6B4A00; }
+
+  code {
+    font-family: 'SF Mono', Monaco, monospace;
+    font-size: 12px;
+    background: #f5f4f0;
+    padding: 1px 5px;
+    border-radius: 3px;
+    color: #444;
+  }
+
+  ol, ul { margin-left: 1.4rem; font-size: 13.5px; color: #2a2a26; }
+  ol li, ul li { margin: 0.3rem 0; }
+
+  .doc-footer {
+    margin-top: 2.5rem;
+    padding-top: 1.15rem;
+    border-top: 0.5px solid rgba(0,0,0,0.08);
+    font-size: 11px;
+    color: #b4b2a9;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  @media print {
+    body { background: white; padding: 0; }
+    .doc { border: none; border-radius: 0; padding: 1.5rem; box-shadow: none; }
+  }
+</style>
+</head>
+<body>
+<div class="doc">
+
+<div class="doc-header">
+  <div class="doc-eyebrow">Azimuth · Mission Mentor Demo Showcase · Audio Sourcing</div>
+  <div class="doc-main-title">CC0 Audio Asset Picks — All 13 Files</div>
+  <div class="doc-meta">
+    <div class="meta-pill">Source <span>Pixabay (primary) · Freesound (backup)</span></div>
+    <div class="meta-pill">License <span>CC0 / Pixabay Content License</span></div>
+    <div class="meta-pill">Format <span>MP3 only</span></div>
+    <div class="meta-pill">Total budget <span>&lt; 5 MB</span></div>
+    <div class="meta-pill">Attribution <span>Not required</span></div>
+  </div>
+</div>
+
+<h2>1. How to Use This Guide</h2>
+
+<p>For each of the 13 files referenced in <code>public/audio/audioMap.ts</code>, this guide gives you a <strong>Primary pick</strong> (highest-confidence match for the spec) and a <strong>Backup pick</strong> (alternate if the primary doesn't fit your ear or gets pulled). Every URL goes to a Pixabay asset page where you click <em>Download</em> → MP3, then rename to the exact filename in the file-card header.</p>
+
+<p>All Pixabay assets shown carry the <em>Pixabay Content License</em>: free for commercial use, no attribution required, modification permitted. None require account login to download.</p>
+
+<div class="callout">
+<strong>Workflow:</strong> Download → preview in your DAW or browser → rename file to the spec name → drop into <code>public/audio/</code> → restart <code>npm run dev</code>. Per the README, the AudioEngine has graceful fallback, so you can drop assets in piece-by-piece and test as you go. After all 13 are present, DevTools Network should show 13 × 200 responses and zero <code>console.warn</code> from the engine.
+</div>
+
+<h2>2. Asset-by-Asset Picks</h2>
+
+<!-- ============================================== -->
+<!-- 1. boot-tone.mp3                                 -->
+<!-- ============================================== -->
+<div class="file-card">
+  <div class="file-card-header">
+    <div>
+      <div class="file-name">boot-tone.mp3</div>
+      <div class="file-purpose">UI startup sting — sub-bass + soft tech bell</div>
+    </div>
+    <div class="file-spec">1–2s · no loop · plays once on Tap to Begin</div>
+  </div>
+
+  <div class="pick primary">
+    <span class="pick-label primary">Primary</span>
+    <span class="pick-title">soft startup sound</span>
+    <span class="pick-meta">· 0:03 · Startup Generic Synth</span>
+    <div class="pick-url">→ Search "soft startup sound" on <a href="https://pixabay.com/sound-effects/search/startup/" target="_blank" rel="noopener">pixabay.com/sound-effects/search/startup/</a></div>
+    <div class="pick-rationale">Clean three-second synthesizer rise — "soft, modern, intro" tagged. The most spec-accurate hit on Pixabay's startup search. Trim to ~1.8s in any DAW if you want it tighter.</div>
+  </div>
+
+  <div class="pick backup">
+    <span class="pick-label backup">Backup</span>
+    <span class="pick-title">Ui Tech Smooth (Startup variation 6)</span>
+    <span class="pick-meta">· 0:07 · 102+ likes</span>
+    <div class="pick-url">→ Search "startup" on <a href="https://pixabay.com/sound-effects/search/startup/" target="_blank" rel="noopener">pixabay.com/sound-effects/search/startup/</a> — top result</div>
+    <div class="pick-rationale">More polished, slightly longer. Use the first 1.5s if it's too long. Strongest social-proof signal in the category.</div>
+  </div>
+</div>
+
+<!-- ============================================== -->
+<!-- 2. gauntlet-ambient.mp3                          -->
+<!-- ============================================== -->
+<div class="file-card">
+  <div class="file-card-header">
+    <div>
+      <div class="file-name">gauntlet-ambient.mp3</div>
+      <div class="file-purpose">Industrial/bureaucratic drone — fluorescent-hum feel</div>
+    </div>
+    <div class="file-spec">30–60s · loops · Gauntlet scene base layer</div>
+  </div>
+
+  <div class="pick primary">
+    <span class="pick-label primary">Primary</span>
+    <span class="pick-title">Industrial-Pulse-Drone</span>
+    <span class="pick-meta">· 0:33 · benschram · 21,521 downloads · 296 likes</span>
+    <div class="pick-url">→ <a href="https://pixabay.com/sound-effects/industrial-pulse-drone-27456/" target="_blank" rel="noopener">pixabay.com/sound-effects/industrial-pulse-drone-27456/</a></div>
+    <div class="pick-rationale">The single best match in the entire Pixabay catalog for the Gauntlet brief. 33-second loop, "Industrial / Deep-space / Pulse / Drone / Atmosphere / Ambient" tagged, vetted by 200K+ plays. This is what bureaucratic indifference sounds like.</div>
+  </div>
+
+  <div class="pick backup">
+    <span class="pick-label backup">Backup</span>
+    <span class="pick-title">DRONE - Horror and Suspense Ambient Background Loop</span>
+    <span class="pick-meta">· seamless loop</span>
+    <div class="pick-url">→ <a href="https://pixabay.com/sound-effects/drone-horror-and-suspense-ambient-background-loop-339888/" target="_blank" rel="noopener">pixabay.com/sound-effects/drone-horror-and-suspense-ambient-background-loop-339888/</a></div>
+    <div class="pick-rationale">Slightly more cinematic than industrial. Use if Industrial-Pulse-Drone reads too "factory" rather than "fluorescent office".</div>
+  </div>
+</div>
+
+<!-- ============================================== -->
+<!-- 3. bass-drop.mp3                                 -->
+<!-- ============================================== -->
+<div class="file-card">
+  <div class="file-card-header">
+    <div>
+      <div class="file-name">bass-drop.mp3</div>
+      <div class="file-purpose">Sub-bass impact — single hit for transition</div>
+    </div>
+    <div class="file-spec">2–3s · no loop · fires on Gauntlet→Hub dissolve</div>
+  </div>
+
+  <div class="pick primary">
+    <span class="pick-label primary">Primary</span>
+    <span class="pick-title">Sub Bass Boom 1</span>
+    <span class="pick-meta">· 0:03 · DJARTMUSIC · 200 likes</span>
+    <div class="pick-url">→ Search "bass boom" on <a href="https://pixabay.com/sound-effects/search/bass%20boom/" target="_blank" rel="noopener">pixabay.com/sound-effects/search/bass%20boom/</a></div>
+    <div class="pick-rationale">Three-second sub-bass hit, exact length match, tagged "Bass / Bass Drop / Boom". The single highest-rated sub-bass hit on the site. This is the punch under the dissolve.</div>
+  </div>
+
+  <div class="pick backup">
+    <span class="pick-label backup">Backup</span>
+    <span class="pick-title">Cinematic Boom</span>
+    <span class="pick-meta">· 0:08 · DRAGON-STUDIO · 124 likes</span>
+    <div class="pick-url">→ Search "cinematic bass" on <a href="https://pixabay.com/sound-effects/search/cinematic%20bass/" target="_blank" rel="noopener">pixabay.com/sound-effects/search/cinematic%20bass/</a></div>
+    <div class="pick-rationale">More cinematic tail (8s). Trim to first 2.5s. Better if you want the bass to ring out into the 432Hz drone rather than punch and stop.</div>
+  </div>
+</div>
+
+<!-- ============================================== -->
+<!-- 4. hub-pad.mp3                                   -->
+<!-- ============================================== -->
+<div class="file-card">
+  <div class="file-card-header">
+    <div>
+      <div class="file-name">hub-pad.mp3</div>
+      <div class="file-purpose">Calm cinematic ambient pad — peaceful &amp; mysterious</div>
+    </div>
+    <div class="file-spec">30–60s · loops · NOVA Hub + Lifecycle (reused) base layer</div>
+  </div>
+
+  <div class="pick primary">
+    <span class="pick-label primary">Primary</span>
+    <span class="pick-title">Ambient Pads Loop</span>
+    <span class="pick-meta">· 0:19 · IdoBerg · 221 likes</span>
+    <div class="pick-url">→ <a href="https://pixabay.com/sound-effects/ambient-pads-loop-296968/" target="_blank" rel="noopener">pixabay.com/sound-effects/ambient-pads-loop-296968/</a></div>
+    <div class="pick-rationale">Designed as a seamless loop. Slightly short at 19s — Howler's <code>loop: true</code> handles the repetition silently. This is the most used asset in your demo (Hub + Lifecycle scenes), so picking the cleanest loop here pays off most.</div>
+  </div>
+
+  <div class="pick backup">
+    <span class="pick-label backup">Backup</span>
+    <span class="pick-title">Cinematic Ambient Pad</span>
+    <span class="pick-meta">· 0:55 · SoundReality · 40 likes</span>
+    <div class="pick-url">→ Search "ambient" on <a href="https://pixabay.com/sound-effects/search/ambient/" target="_blank" rel="noopener">pixabay.com/sound-effects/search/ambient/</a></div>
+    <div class="pick-rationale">Closer to the spec's 30–60s sweet spot if you want a single playthrough per minute of dwell. Slightly more cinematic / less peaceful than IdoBerg's loop.</div>
+  </div>
+</div>
+
+<!-- ============================================== -->
+<!-- 5. chime.mp3                                     -->
+<!-- ============================================== -->
+<div class="file-card">
+  <div class="file-card-header">
+    <div>
+      <div class="file-name">chime.mp3</div>
+      <div class="file-purpose">Soft UI chime — fires on tool-node hover</div>
+    </div>
+    <div class="file-spec">0.3–0.5s · no loop · interaction one-shot</div>
+  </div>
+
+  <div class="pick primary">
+    <span class="pick-label primary">Primary</span>
+    <span class="pick-title">Clear Bell Notification Sound</span>
+    <span class="pick-meta">· short · "Bright / Clear / Modern / Subtle / Gentle / Pleasant"</span>
+    <div class="pick-url">→ <a href="https://pixabay.com/sound-effects/clear-bell-notification-sound-351709/" target="_blank" rel="noopener">pixabay.com/sound-effects/clear-bell-notification-sound-351709/</a></div>
+    <div class="pick-rationale">The author's own tag list reads like our spec. Trim/fade to ~0.4s in your editor if needed. This is the single sound a partner will hear most often — make it pleasant.</div>
+  </div>
+
+  <div class="pick backup">
+    <span class="pick-label backup">Backup</span>
+    <span class="pick-title">Melancholy UI Chime</span>
+    <span class="pick-meta">· 0:01 · 44 likes</span>
+    <div class="pick-url">→ Search "ui chime" on <a href="https://pixabay.com/sound-effects/search/soft%20chime/" target="_blank" rel="noopener">pixabay.com/sound-effects/search/soft%20chime/</a></div>
+    <div class="pick-rationale">Already exactly 1s, no trim needed. Slightly more melancholic than peaceful — fits the contemplative tone of the Hub if you find Clear Bell too cheerful.</div>
+  </div>
+</div>
+
+<!-- ============================================== -->
+<!-- 6. maps-harmonics.mp3                            -->
+<!-- ============================================== -->
+<div class="file-card">
+  <div class="file-card-header">
+    <div>
+      <div class="file-name">maps-harmonics.mp3</div>
+      <div class="file-purpose">Discovery / wonder — airy harmonic textures</div>
+    </div>
+    <div class="file-spec">30–60s · loops · MAPS sanctuary base layer</div>
+  </div>
+
+  <div class="pick primary">
+    <span class="pick-label primary">Primary</span>
+    <span class="pick-title">uplifting pad texture</span>
+    <span class="pick-meta">· 1:36 · SamuelFJohanns · 1.2K likes</span>
+    <div class="pick-url">→ Search "calm" on <a href="https://pixabay.com/sound-effects/search/calm/" target="_blank" rel="noopener">pixabay.com/sound-effects/search/calm/</a></div>
+    <div class="pick-rationale">"Calm Beautiful" tagged, 1,200+ likes — the most-loved ambient pad on Pixabay. Longer than spec; trim to a 45s seamless excerpt or let it run once across the dwell. MAPS is your "golden-hour possibility" scene; this carries that mood.</div>
+  </div>
+
+  <div class="pick backup">
+    <span class="pick-label backup">Backup</span>
+    <span class="pick-title">Peaceful Happy Cinematic Ambient Loop</span>
+    <span class="pick-meta">· 0:33 · AKTASOK</span>
+    <div class="pick-url">→ <a href="https://pixabay.com/music/main-title-peaceful-happy-cinematic-ambient-loop-234175/" target="_blank" rel="noopener">pixabay.com/music/main-title-peaceful-happy-cinematic-ambient-loop-234175/</a></div>
+    <div class="pick-rationale">Already at the spec length and explicitly designed as a loop. Tagged "Hopeful / Inspiration / Inspiring" — this is MAPS's emotional brief verbatim.</div>
+  </div>
+</div>
+
+<!-- ============================================== -->
+<!-- 7. confirmation.mp3                              -->
+<!-- ============================================== -->
+<div class="file-card">
+  <div class="file-card-header">
+    <div>
+      <div class="file-name">confirmation.mp3</div>
+      <div class="file-purpose">UI tap success — gentle positive blip</div>
+    </div>
+    <div class="file-spec">0.2–0.4s · no loop · MAPS interaction one-shot</div>
+  </div>
+
+  <div class="pick primary">
+    <span class="pick-label primary">Primary</span>
+    <span class="pick-title">Confirm Tap</span>
+    <span class="pick-meta">· 0:01 · ExistentialTaco · "Game Ui Confirm Tap" · 74 likes</span>
+    <div class="pick-url">→ Search "confirm" on <a href="https://pixabay.com/sound-effects/search/confirm/" target="_blank" rel="noopener">pixabay.com/sound-effects/search/confirm/</a></div>
+    <div class="pick-rationale">Exact length, exact intent — a 1-second positive UI confirmation tap. No editing needed.</div>
+  </div>
+
+  <div class="pick backup">
+    <span class="pick-label backup">Backup</span>
+    <span class="pick-title">sample_confirm_success02_kofi</span>
+    <span class="pick-meta">· 0:01 · 34 likes</span>
+    <div class="pick-url">→ Same search page, scroll to find the kofi series</div>
+    <div class="pick-rationale">Slightly more melodic if Confirm Tap reads as too gamey for a defense/workforce audience.</div>
+  </div>
+</div>
+
+<!-- ============================================== -->
+<!-- 8. kit-pulse.mp3                                 -->
+<!-- ============================================== -->
+<div class="file-card">
+  <div class="file-card-header">
+    <div>
+      <div class="file-name">kit-pulse.mp3</div>
+      <div class="file-purpose">Tech HUD pulse — structured rhythm, command-center feel</div>
+    </div>
+    <div class="file-spec">30–60s · loops · K.I.T. sanctuary base layer</div>
+  </div>
+
+  <div class="pick primary">
+    <span class="pick-label primary">Primary</span>
+    <span class="pick-title">Sci-Fi Heartbeat</span>
+    <span class="pick-meta">· loop · film &amp; special effects</span>
+    <div class="pick-url">→ <a href="https://pixabay.com/sound-effects/film-special-effects-sci-fi-heartbeat-56403/" target="_blank" rel="noopener">pixabay.com/sound-effects/film-special-effects-sci-fi-heartbeat-56403/</a></div>
+    <div class="pick-rationale">Structured rhythmic pulse — the literal "command-center heartbeat" the spec calls for. K.I.T. is the most cool/structured of the four sanctuaries, and this anchors that.</div>
+  </div>
+
+  <div class="pick backup">
+    <span class="pick-label backup">Backup</span>
+    <span class="pick-title">Преход (pulse loop)</span>
+    <span class="pick-meta">· 0:33 · Ivanv70 · 130 likes · "Pulse Loop Suspense"</span>
+    <div class="pick-url">→ Search "pulse pulse" on <a href="https://pixabay.com/sound-effects/search/pulse%20pulse/" target="_blank" rel="noopener">pixabay.com/sound-effects/search/pulse%20pulse/</a></div>
+    <div class="pick-rationale">Already at 33s — exact loop length. Slightly more suspenseful than Sci-Fi Heartbeat, fits if you want K.I.T. to feel "active duty / mission tempo" rather than "passive heartbeat".</div>
+  </div>
+</div>
+
+<!-- ============================================== -->
+<!-- 9. click-tap.mp3                                 -->
+<!-- ============================================== -->
+<div class="file-card">
+  <div class="file-card-header">
+    <div>
+      <div class="file-name">click-tap.mp3</div>
+      <div class="file-purpose">UI click for swipe advance — very short</div>
+    </div>
+    <div class="file-spec">0.1–0.2s · no loop · K.I.T. interaction one-shot</div>
+  </div>
+
+  <div class="pick primary">
+    <span class="pick-label primary">Primary</span>
+    <span class="pick-title">UI Click Soft</span>
+    <span class="pick-meta">· 0:01 · SoundShelfStudio · "Ui Sound Ui Sound"</span>
+    <div class="pick-url">→ Search "ui click" on <a href="https://pixabay.com/sound-effects/search/ui%20click/" target="_blank" rel="noopener">pixabay.com/sound-effects/search/ui%20click/</a></div>
+    <div class="pick-rationale">Cleanest, shortest, most generic-tech tap on the site. Fires every time someone advances a card — needs to disappear into the background, which "soft" does.</div>
+  </div>
+
+  <div class="pick backup">
+    <span class="pick-label backup">Backup</span>
+    <span class="pick-title">Interface Tap Button</span>
+    <span class="pick-meta">· 0:01 · freesound_community · 178 likes</span>
+    <div class="pick-url">→ Same search page · top result by likes</div>
+    <div class="pick-rationale">Higher social proof, slightly more pronounced. Use if UI Click Soft is too quiet to hear over kiosk speakers.</div>
+  </div>
+</div>
+
+<!-- ============================================== -->
+<!-- 10. base-delta.mp3                               -->
+<!-- ============================================== -->
+<div class="file-card">
+  <div class="file-card-header">
+    <div>
+      <div class="file-name">base-delta.mp3</div>
+      <div class="file-purpose">Wellness — slow delta-wave warm pad, calming</div>
+    </div>
+    <div class="file-spec">30–60s · loops · BASE sanctuary (longest crossfade, 3.0s)</div>
+  </div>
+
+  <div class="pick primary">
+    <span class="pick-label primary">Primary</span>
+    <span class="pick-title">Calm relaxing Pad</span>
+    <span class="pick-meta">· 1:08 · Liecio · "Calm Meditative Peace" · 54 likes</span>
+    <div class="pick-url">→ Search "ambient pad" on <a href="https://pixabay.com/sound-effects/search/ambient%20pad/" target="_blank" rel="noopener">pixabay.com/sound-effects/search/ambient%20pad/</a></div>
+    <div class="pick-rationale">"Calm / Meditative / Peace" tagged — exact emotional fit for the trauma-informed BASE scene. 1:08 length lets the 3.0s crossfade breathe. <strong>Trauma-informed warning:</strong> avoid anything tagged "Tibetan bowl", "spiritual", or "binaural beats" — the BASE scene is non-clinical wellness, not new-age. This pick is plain, warm, secular.</div>
+  </div>
+
+  <div class="pick backup">
+    <span class="pick-label backup">Backup</span>
+    <span class="pick-title">Warm Pad Fragment – Short</span>
+    <span class="pick-meta">· 0:39 · GigiDeLaRoMusic · "Ambient Relaxing"</span>
+    <div class="pick-url">→ Same search page</div>
+    <div class="pick-rationale">Closer to the 30–60s ideal length. Same calm, secular warmth.</div>
+  </div>
+</div>
+
+<!-- ============================================== -->
+<!-- 11. breathing-ambient.mp3                        -->
+<!-- ============================================== -->
+<div class="file-card">
+  <div class="file-card-header">
+    <div>
+      <div class="file-name">breathing-ambient.mp3</div>
+      <div class="file-purpose">Soft breath / exhale accent — very subtle</div>
+    </div>
+    <div class="file-spec">1–2s · no loop · BASE interaction one-shot</div>
+  </div>
+
+  <div class="pick primary">
+    <span class="pick-label primary">Primary</span>
+    <span class="pick-title">Soft Harmonic Breath – Short</span>
+    <span class="pick-meta">· 0:43 · GigiDeLaRoMusic · "Ambient Relaxing"</span>
+    <div class="pick-url">→ Search "soft ambient" on <a href="https://pixabay.com/sound-effects/search/soft%20ambient/" target="_blank" rel="noopener">pixabay.com/sound-effects/search/soft%20ambient/</a></div>
+    <div class="pick-rationale">Trim to 1.5s — this is a synthesized harmonic-breath texture, not a literal human exhale. <strong>Critical:</strong> do <em>not</em> use a human breathing recording for the BASE scene — partners on the floor will read it as voyeuristic / clinical. A musical breath texture protects the trauma-informed tone.</div>
+  </div>
+
+  <div class="pick backup">
+    <span class="pick-label backup">Backup</span>
+    <span class="pick-title">Light Ether Breath – Short</span>
+    <span class="pick-meta">· 0:20 · GigiDeLaRoMusic</span>
+    <div class="pick-url">→ Search "slow-breath" on <a href="https://pixabay.com/sound-effects/search/slow-breath/" target="_blank" rel="noopener">pixabay.com/sound-effects/search/slow-breath/</a></div>
+    <div class="pick-rationale">Same artist, lighter feel. Already at 20s — no trim needed if you fade out at 1.5s.</div>
+  </div>
+</div>
+
+<!-- ============================================== -->
+<!-- 12. scout-hum.mp3                                -->
+<!-- ============================================== -->
+<div class="file-card">
+  <div class="file-card-header">
+    <div>
+      <div class="file-name">scout-hum.mp3</div>
+      <div class="file-purpose">Analytical / precise mid-frequency hum</div>
+    </div>
+    <div class="file-spec">30–60s · loops · SCOUT sanctuary base layer</div>
+  </div>
+
+  <div class="pick primary">
+    <span class="pick-label primary">Primary</span>
+    <span class="pick-title">Spaceship hum low frequency</span>
+    <span class="pick-meta">· 0:48 · AudioPapkin · "Engine Loop"</span>
+    <div class="pick-url">→ Search "low-hum" on <a href="https://pixabay.com/sound-effects/search/low-hum/" target="_blank" rel="noopener">pixabay.com/sound-effects/search/low-hum/</a></div>
+    <div class="pick-rationale">48 seconds of clean, low-frequency analytical hum. SCOUT is the "precision data lattice" scene — partners need to feel this scene is the most credible / engineered of the four. A clean spaceship hum reads "system-at-work".</div>
+  </div>
+
+  <div class="pick backup">
+    <span class="pick-label backup">Backup</span>
+    <span class="pick-title">Deep Space Resonance</span>
+    <span class="pick-meta">· 0:37 · AudioPapkin · "Sci-fi Ambient Drone"</span>
+    <div class="pick-url">→ Search "ambient-drone" on <a href="https://pixabay.com/sound-effects/search/ambient-drone/" target="_blank" rel="noopener">pixabay.com/sound-effects/search/ambient-drone/</a></div>
+    <div class="pick-rationale">Same artist, slightly more reverberant. Use if Spaceship Hum is too thin on booth speakers.</div>
+  </div>
+</div>
+
+<!-- ============================================== -->
+<!-- 13. resolve-tone.mp3                             -->
+<!-- ============================================== -->
+<div class="file-card">
+  <div class="file-card-header">
+    <div>
+      <div class="file-name">resolve-tone.mp3</div>
+      <div class="file-purpose">Completion bell / success bowl tone</div>
+    </div>
+    <div class="file-spec">0.3–0.6s · no loop · SCOUT interaction one-shot</div>
+  </div>
+
+  <div class="pick primary">
+    <span class="pick-label primary">Primary</span>
+    <span class="pick-title">Notification Interface Success Positive Correct</span>
+    <span class="pick-meta">· 0:02 · Universfield · 156 likes</span>
+    <div class="pick-url">→ Search "success" on <a href="https://pixabay.com/sound-effects/search/success/" target="_blank" rel="noopener">pixabay.com/sound-effects/search/success/</a></div>
+    <div class="pick-rationale">Two-second clean completion tone. SCOUT cards show evidence resolving — this fires when a partner advances through the BAB sequence. Should feel like "claim approved", not "achievement unlocked". Universfield's tone is sober / interface-grade, not gamey.</div>
+  </div>
+
+  <div class="pick backup">
+    <span class="pick-label backup">Backup</span>
+    <span class="pick-title">Short Success Sound Glockenspiel</span>
+    <span class="pick-meta">· 0:02 · 451 likes (highest-loved success tone on Pixabay)</span>
+    <div class="pick-url">→ Same search page</div>
+    <div class="pick-rationale">Highest-rated success tone in the catalog. Slightly more melodic / "video-game" — use if Universfield's tone reads as too clinical for the partner audience.</div>
+  </div>
+</div>
+
+<h2>3. Filename Cheat Sheet</h2>
+
+<p>After downloading, rename each file to <strong>exactly</strong> the name below. Order matches Section 2 above.</p>
+
+<table>
+<thead>
+<tr><th>#</th><th style="width: 30%">Filename</th><th style="width: 14%">Spec</th><th>Primary pick (rename source to this)</th></tr>
+</thead>
+<tbody>
+<tr><td>1</td><td><code>boot-tone.mp3</code></td><td>1–2s</td><td>soft startup sound</td></tr>
+<tr><td>2</td><td><code>gauntlet-ambient.mp3</code></td><td>33s loop</td><td>Industrial-Pulse-Drone</td></tr>
+<tr><td>3</td><td><code>bass-drop.mp3</code></td><td>3s</td><td>Sub Bass Boom 1</td></tr>
+<tr><td>4</td><td><code>hub-pad.mp3</code></td><td>19s loop</td><td>Ambient Pads Loop (IdoBerg)</td></tr>
+<tr><td>5</td><td><code>chime.mp3</code></td><td>~0.4s</td><td>Clear Bell Notification Sound</td></tr>
+<tr><td>6</td><td><code>maps-harmonics.mp3</code></td><td>~45s loop</td><td>uplifting pad texture (trim)</td></tr>
+<tr><td>7</td><td><code>confirmation.mp3</code></td><td>~0.3s</td><td>Confirm Tap</td></tr>
+<tr><td>8</td><td><code>kit-pulse.mp3</code></td><td>33s loop</td><td>Sci-Fi Heartbeat</td></tr>
+<tr><td>9</td><td><code>click-tap.mp3</code></td><td>~0.15s</td><td>UI Click Soft</td></tr>
+<tr><td>10</td><td><code>base-delta.mp3</code></td><td>1:08 loop</td><td>Calm relaxing Pad (Liecio)</td></tr>
+<tr><td>11</td><td><code>breathing-ambient.mp3</code></td><td>1.5s</td><td>Soft Harmonic Breath – Short (trim)</td></tr>
+<tr><td>12</td><td><code>scout-hum.mp3</code></td><td>48s loop</td><td>Spaceship hum low frequency</td></tr>
+<tr><td>13</td><td><code>resolve-tone.mp3</code></td><td>~0.5s</td><td>Notification Interface Success Positive</td></tr>
+</tbody>
+</table>
+
+<h2>4. Editing Notes — Trimming and Loop-Smoothing</h2>
+
+<p>Eight of the 13 files match the spec lengths exactly. The other five need light editing. Use <strong>Audacity</strong> (free, open-source) or any DAW you already have:</p>
+
+<ol>
+<li><strong>Trim "soft startup sound" 0:03 → 1.8s</strong> — keep the rise, fade out at the peak. (boot-tone)</li>
+<li><strong>Trim "uplifting pad texture" 1:36 → 45s seamless excerpt</strong> — find a quiet zero-crossing, cut, apply a 1s crossfade between start and end. (maps-harmonics)</li>
+<li><strong>Trim "Soft Harmonic Breath – Short" 0:43 → 1.5s</strong> — pick the cleanest single-breath cycle, fade in 100ms, fade out 200ms. (breathing-ambient)</li>
+<li><strong>Loop-smooth "Industrial-Pulse-Drone"</strong> — usually fine as-is, but if you hear a click at the loop boundary, apply a 200ms crossfade in Audacity (Effect → Crossfade Tracks). (gauntlet-ambient)</li>
+<li><strong>Loop-smooth any other 30–60s loop with audible boundary clicks</strong> — same technique. Howler.js doesn't crossfade between loop iterations, so the file itself must seam.</li>
+</ol>
+
+<p>Export everything at <strong>128 kbps MP3</strong> (a 33s file ≈ 480 KB; total payload stays well under the 5 MB target).</p>
+
+<h2>5. Verification — After Drop-In</h2>
+
+<ol>
+<li>Files placed in <code>public/audio/</code> with exact filenames.</li>
+<li><code>npm run dev</code> → open <code>localhost:3000</code></li>
+<li>DevTools → Network tab → reload. Confirm <strong>13 × 200 OK</strong> on <code>/audio/*.mp3</code>. Any 404 means a typo in the filename.</li>
+<li>DevTools → Console. The AudioEngine logs <code>[AudioEngine] Failed to load…</code> on missing files. Should be silent.</li>
+<li>Click "TAP TO BEGIN" — boot-tone fires once, then crossfades to hub-pad over 2.5s.</li>
+<li>Hover a tool node — chime plays. Tap a tool node — scene crossfades to that drone.</li>
+<li>Inside any sanctuary, swipe to advance a card — the sanctuary's interaction one-shot fires.</li>
+<li>Tap the Azimuth back button — hub-pad continues seamlessly during the return flight.</li>
+</ol>
+
+<h2>6. Risk &amp; Caveats</h2>
+
+<div class="callout warn">
+<strong>BASE trauma-informed audio risk.</strong> The BASE scene is the one place where audio choice can backfire. Avoid: literal human breathing samples, Tibetan bowls, "binaural beats", "528Hz healing", "chakra" anything. These read as new-age clinical-adjacent rather than neutral wellness. Stick to plain warm pad textures (the picks above honor this). When in doubt, run any new BASE candidate through your <code>nova-safeguard</code> + <code>nova-mindhunter</code> skills before committing.
+</div>
+
+<div class="callout">
+<strong>Pixabay license restated:</strong> All assets above are under the Pixabay Content License — free for commercial use including kiosk deployment, no attribution required, modification (trimming, looping, fading) permitted. No account login required to download. Source: <a href="https://pixabay.com/service/license-summary/" target="_blank" rel="noopener">pixabay.com/service/license-summary/</a>
+</div>
+
+<h3>If a primary pick has been removed</h3>
+<p>Pixabay occasionally removes assets when authors revoke contributions. If a Primary URL above 404s, fall back to the Backup pick. If both are gone, search the term in the URL path on Pixabay — the alternate results in that category are all CC0-licensed.</p>
+
+<h3>Freesound as deeper backup</h3>
+<p>If you need ten more options on any single category, <a href="https://freesound.org/" target="_blank" rel="noopener">freesound.org</a> with the filter <em>License → "Creative Commons 0"</em> is the largest CC0 audio archive online. Free login required, but downloads are unrestricted commercial-use under CC0.</p>
+
+<h2>7. One-Hour Build Plan</h2>
+
+<table>
+<thead>
+<tr><th style="width: 14%">Time</th><th>Action</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>0:00–0:25</strong></td><td>Open all 13 Primary URLs in tabs. Click Download → Save As to <code>public/audio/</code> with the exact filename. (~2 min per file × 13 = 26 min)</td></tr>
+<tr><td><strong>0:25–0:45</strong></td><td>Open Audacity. Trim the 5 files flagged in §4 above. Export each as 128 kbps MP3, overwriting the original.</td></tr>
+<tr><td><strong>0:45–0:55</strong></td><td><code>npm run dev</code>. Walk through the verification checklist in §5. Fix any 404s by checking filenames.</td></tr>
+<tr><td><strong>0:55–1:00</strong></td><td>Listen on actual booth speakers (or closest equivalent). Adjust per-scene <code>baseVolume</code> in <code>audioMap.ts</code> if anything is hot or buried — the README explicitly recommends this over re-rendering.</td></tr>
+</tbody>
+</table>
+
+<div class="callout">
+<strong>Done state:</strong> All 13 audio files in <code>public/audio/</code>, all 13 routes returning 200, AudioEngine log silent, full demo plays end-to-end with audio crossfading between scenes. Total time: ~1 hour. Total payload: ~3.5 MB.
+</div>
+
+<div class="doc-footer">
+<span>Azimuth · Phase 3 Audio Sourcing · CC0 Pipeline</span>
+<span>VCU Demo Day 2026 · Pre-Launch Category</span>
+</div>
+
+</div>
+</body>
+</html>

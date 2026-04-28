@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useMemo } from 'react';
+import { useRef, useMemo, useLayoutEffect, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Html } from '@react-three/drei';
 import * as THREE from 'three';
@@ -19,6 +19,9 @@ interface ToolNodeProps {
   label: string;
   subtitle: string;
   position: [number, number, number];
+  lifecyclePosition: [number, number, number];
+  lifecycleMode: boolean;
+  lifecycleCopy: string;
   onSelect: () => void;
   isActive: boolean;
   /** Per-node rotation character. Defaults to 'y' */
@@ -78,8 +81,9 @@ function EdgeHighlights({
 }
 
 // ---------------------------------------------------------------------------
-// Inner core — small emissive sphere inside the crystalline body
-// Catches bloom so it glows through the transmission material
+// Inner core — small emissive sphere inside the crystalline body.
+// Constant gentle glow (no hover boost) so the node reads at rest and the
+// central Azimuth logo's amber sun stays the dominant bloom in the hub.
 // ---------------------------------------------------------------------------
 
 function InnerCore({ color }: { color: string }) {
@@ -89,7 +93,7 @@ function InnerCore({ color }: { color: string }) {
       <meshStandardMaterial
         color={color}
         emissive={color}
-        emissiveIntensity={2.5}
+        emissiveIntensity={1.6}
         toneMapped={false}
       />
     </mesh>
@@ -147,6 +151,9 @@ export default function ToolNode({
   label,
   subtitle,
   position,
+  lifecyclePosition,
+  lifecycleMode,
+  lifecycleCopy,
   onSelect,
   isActive,
   rotationAxis = 'y',
@@ -159,14 +166,38 @@ export default function ToolNode({
   // Shared geometry between body and edges
   const nodeGeometry = useMemo(() => createNodeGeometry(geometry), [geometry]);
 
+  // Position lerp — target switches between cardinal and lifecycle timeline positions
+  const lerpTarget = useRef(new THREE.Vector3(...position));
+
+  // Initialize group position synchronously before first canvas frame
+  useLayoutEffect(() => {
+    if (groupRef.current) {
+      groupRef.current.position.set(...position);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Update lerp target when lifecycle mode changes
+  useEffect(() => {
+    const target = lifecycleMode ? lifecyclePosition : position;
+    lerpTarget.current.set(...target);
+  }, [lifecycleMode]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Animation state refs
   const isHovered = useRef(false);
   const currentScale = useRef(1.0);
   const currentEmissive = useRef(0.2);
+  // hoverState: smooth 0..1 ref that drives the label fade-in.
+  const hoverState = useRef(0);
   const labelOpacity = useRef(0);
+  const lifecycleLabelOpacity = useRef(0);
   const elapsedTime = useRef(0);
 
   useFrame((_, delta) => {
+    // Animate group position toward the current layout target
+    if (groupRef.current) {
+      groupRef.current.position.lerp(lerpTarget.current, 0.05);
+    }
+
     if (!meshRef.current || !materialRef.current) return;
     elapsedTime.current += delta;
 
@@ -200,26 +231,34 @@ export default function ToolNode({
         break;
     }
 
+    // --- Shared hover state lerp (0..1) — drives glow halo + InnerCore + label ---
+    const targetHover = isHovered.current ? 1.0 : 0.0;
+    hoverState.current += (targetHover - hoverState.current) * 0.12;
+
     // --- Hover scale lerp ---
     const targetScale = isHovered.current ? 1.08 : 1.0;
     currentScale.current += (targetScale - currentScale.current) * 0.1;
     meshRef.current.scale.setScalar(currentScale.current);
     if (edgesGroupRef.current) edgesGroupRef.current.scale.setScalar(currentScale.current);
 
-    // --- Hover emissive lerp ---
+    // --- Hover emissive lerp on the body. Subtle lift from 0.2 → 0.6 — enough
+    //     to signal hover without competing with the central logo's bloom. ---
     const targetEmissive = isHovered.current ? 0.6 : 0.2;
     currentEmissive.current += (targetEmissive - currentEmissive.current) * 0.1;
     materialRef.current.emissiveIntensity = currentEmissive.current;
 
-    // --- Label opacity lerp ---
-    const targetLabelOpacity = isHovered.current ? 1.0 : 0.0;
-    labelOpacity.current += (targetLabelOpacity - labelOpacity.current) * 0.12;
+    // --- Lifecycle label fade — visible only when lifecycleMode is active ---
+    const targetLifecycleOpacity = lifecycleMode ? 1.0 : 0.0;
+    lifecycleLabelOpacity.current +=
+      (targetLifecycleOpacity - lifecycleLabelOpacity.current) * 0.08;
+
+    // --- Hover label suppressed while lifecycle label is visible ---
+    labelOpacity.current = lifecycleMode ? 0 : hoverState.current;
   });
 
   return (
     <group
       ref={groupRef}
-      position={position}
       onPointerOver={(e) => {
         e.stopPropagation();
         isHovered.current = true;
@@ -265,7 +304,7 @@ export default function ToolNode({
       {/* Selection ring pulse */}
       <SelectionRing active={isActive} />
 
-      {/* HTML label overlay */}
+      {/* HTML label overlay — fades in with hoverState */}
       <Html
         position={[0, 1.8, 0]}
         center
@@ -276,24 +315,25 @@ export default function ToolNode({
           userSelect: 'none',
           whiteSpace: 'nowrap',
         }}
-        distanceFactor={10}
+        distanceFactor={8}
       >
         <div
           style={{
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            gap: 2,
+            gap: 3,
           }}
         >
           <span
             style={{
               fontFamily: 'Satoshi, DM Sans, system-ui, sans-serif',
-              fontWeight: 700,
-              fontSize: 14,
-              color: '#D8DEE9',
-              textShadow: '0 1px 4px rgba(0,0,0,0.6)',
-              letterSpacing: '0.02em',
+              fontWeight: 900,
+              fontSize: 18,
+              color: '#FFFFFF',
+              textShadow: '0 1px 8px rgba(0,0,0,0.85)',
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
             }}
           >
             {label}
@@ -303,11 +343,75 @@ export default function ToolNode({
               fontFamily: 'Inter, IBM Plex Sans, system-ui, sans-serif',
               fontWeight: 400,
               fontSize: 11,
-              color: '#526A82',
-              textShadow: '0 1px 3px rgba(0,0,0,0.4)',
+              color: '#8896A8',
+              textShadow: '0 1px 3px rgba(0,0,0,0.6)',
             }}
           >
             {subtitle}
+          </span>
+        </div>
+      </Html>
+
+      {/* Lifecycle label — sits below the node when scene === 'lifecycle' */}
+      <Html
+        position={[0, -2.4, 0]}
+        center
+        style={{
+          opacity: lifecycleLabelOpacity.current,
+          transition: 'none',
+          pointerEvents: 'none',
+          userSelect: 'none',
+        }}
+        distanceFactor={9}
+      >
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 4,
+            width: 240,
+          }}
+        >
+          <span
+            style={{
+              fontFamily: 'Inter, IBM Plex Sans, system-ui, sans-serif',
+              fontWeight: 500,
+              fontSize: 10,
+              color: '#526A82',
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+              textShadow: '0 1px 4px rgba(0,0,0,0.7)',
+            }}
+          >
+            {subtitle}
+          </span>
+          <span
+            style={{
+              fontFamily: 'Satoshi, DM Sans, system-ui, sans-serif',
+              fontWeight: 900,
+              fontSize: 22,
+              color: '#FFFFFF',
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+              textShadow: '0 1px 8px rgba(0,0,0,0.85)',
+            }}
+          >
+            {label}
+          </span>
+          <span
+            style={{
+              fontFamily: 'Space Grotesk, Inter, system-ui, sans-serif',
+              fontWeight: 300,
+              fontStyle: 'italic',
+              fontSize: 13,
+              color: '#D8DEE9',
+              textShadow: '0 1px 4px rgba(0,0,0,0.7)',
+              textAlign: 'center',
+              lineHeight: 1.4,
+            }}
+          >
+            {lifecycleCopy}
           </span>
         </div>
       </Html>

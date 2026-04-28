@@ -16,12 +16,6 @@
   --calm-purple: #7B68AE;
   --peak-light: #FFFFFF;
 
-  /* Gauntlet Exception Colors — Section 1.3 */
-  --gauntlet-bg-deep: #0A0E1A;
-  --gauntlet-bg-mid: #1C2331;
-  --gauntlet-surface: #6B6B6B;
-  --gauntlet-light: #C8C8C8;
-
   /* Glass-Morphic Panel Colors — Section 1.4 */
   --glass-bg: rgba(28, 35, 49, 0.65);
   --glass-border: rgba(0, 206, 209, 0.15);
@@ -54,69 +48,45 @@ html,
 body {
   margin: 0;
   padding: 0;
+  width: 100%;
+  height: 100%;
   background-color: var(--deep-navy);
   color: var(--silver);
-  overflow-x: hidden;
+  overflow: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  /* Kiosk mode — no text selection, no iOS callout, prevent pinch-zoom */
+  /* Kiosk: no selection, no callout, no tap highlight */
   user-select: none;
   -webkit-user-select: none;
   -ms-user-select: none;
   -webkit-touch-callout: none;
   -webkit-tap-highlight-color: transparent;
 
-  /* Prevent pull-to-refresh and rubber-band scroll */
   overscroll-behavior: none;
-
-  /* Prevent double-tap zoom; keep pan gestures for scroll */
   touch-action: manipulation;
-}
 
-/* Hide scrollbars visually — scroll still works for the scrollytelling */
-html {
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE/Edge */
-  /* Proximity snap: snaps to sections near boundaries but allows dwell in between.
-     Uses proximity (not mandatory) so the camera can smoothly interpolate between
-     scenes without feeling "stuck" at each section. */
-  scroll-snap-type: y proximity;
-  /* Smooth native scroll for trackpad/mouse wheel on Surface Pro */
-  scroll-behavior: smooth;
-}
-html::-webkit-scrollbar {
-  display: none; /* Chrome/Safari */
-}
-
-/* Respect reduced-motion: disable smooth scroll */
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
-}
-
-/* Kiosk body: hide cursor entirely. Remove .kiosk class for dev mode. */
-body.kiosk {
+  /* Touch-only kiosk — no cursor on any device */
   cursor: none;
 }
-body.kiosk * {
+
+/* Belt-and-suspenders: every descendant also hides cursor */
+* {
   cursor: none !important;
 }
 
-/* Glass Panel hover state — Section 1.4 */
+/* Glass Panel hover state */
 .glass-panel:hover {
   background: var(--glass-bg-active);
   border-color: var(--glass-border-active);
 }
 
-/* Focus ring for accessibility — Section 10.1 */
+/* Focus ring for accessibility */
 .focus-cyan:focus-visible {
   outline: 3px solid var(--cyan-struct);
   outline-offset: 2px;
 }
 
-/* Accessibility — Section 10.1 */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -124,6 +94,5 @@ body.kiosk * {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
   }
 }

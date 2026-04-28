@@ -3,6 +3,7 @@
 import { usePortalStore } from '@/state/portalStore';
 import SwipeCarousel from '@/components/ui/SwipeCarousel';
 import GlassPanel from '@/components/ui/GlassPanel';
+import ToolTitle from '@/components/ui/ToolTitle';
 import MetricCard from '@/components/ui/MetricCard';
 import FeatureRow from '@/components/ui/FeatureRow';
 import NOVANarration from '@/components/ui/NOVANarration';
@@ -69,6 +70,7 @@ function CompareRow({ before, after }: { before: string; after: string }) {
 export default function SCOUTShowcase() {
   const currentScene = usePortalStore((s) => s.currentScene);
   const setCarouselIndex = usePortalStore((s) => s.setCarouselIndex);
+  const goTo = usePortalStore((s) => s.goTo);
 
   if (currentScene !== 'scout') return null;
 
@@ -78,10 +80,11 @@ export default function SCOUTShowcase() {
       style={{ touchAction: 'pan-y' }}
     >
       <div className="w-full max-w-2xl px-lg">
-        <SwipeCarousel onIndexChange={setCarouselIndex}>
+        <SwipeCarousel onIndexChange={setCarouselIndex} onLastCardTap={() => goTo('hub')}>
           {/* Card 1: The Problem (Before) */}
           <GlassPanel size="full" tiltOnTouch>
             <div className="space-y-lg p-md">
+              <ToolTitle name="SCOUT" />
               <div
                 className="font-inter font-medium tracking-wider uppercase"
                 style={{ color: 'var(--slate-blue)', fontSize: 'var(--text-caption)' }}
@@ -124,6 +127,7 @@ export default function SCOUTShowcase() {
           {/* Card 2: The Solution (Bridge) */}
           <GlassPanel size="full" tiltOnTouch>
             <div className="space-y-lg p-md">
+              <ToolTitle name="SCOUT" />
               <div
                 className="font-inter font-medium tracking-wider uppercase"
                 style={{ color: 'var(--cyan-struct)', fontSize: 'var(--text-caption)' }}
@@ -166,6 +170,7 @@ export default function SCOUTShowcase() {
           {/* Card 3: The Outcome — "Not hoping. Knowing." + Before/After table */}
           <GlassPanel size="full" tiltOnTouch>
             <div className="space-y-md p-md">
+              <ToolTitle name="SCOUT" />
               <div
                 className="font-inter font-medium tracking-wider uppercase"
                 style={{ color: 'var(--scout-blue)', fontSize: 'var(--text-caption)' }}
@@ -250,6 +255,7 @@ export default function SCOUTShowcase() {
           {/* Card 4: NOVA's Take — flagship narration */}
           <GlassPanel size="full" tiltOnTouch>
             <div className="space-y-lg p-md">
+              <ToolTitle name="SCOUT" />
               <div
                 className="font-inter font-medium tracking-wider uppercase"
                 style={{ color: 'var(--amber-core)', fontSize: 'var(--text-caption)' }}

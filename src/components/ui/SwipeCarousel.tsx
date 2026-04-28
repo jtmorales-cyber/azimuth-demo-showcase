@@ -1,17 +1,28 @@
 'use client';
 
-import { useRef, useState, useCallback, useEffect, type ReactNode } from 'react';
+import { Children, useRef, useState, useCallback, useEffect, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
+import { usePortalStore } from '@/state/portalStore';
+import { getAudioEngine } from '@/audio/AudioEngine';
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
 interface SwipeCarouselProps {
-  children: ReactNode[];
+  children: ReactNode | ReactNode[];
   onIndexChange?: (index: number) => void;
+  /**
+   * Fired when the user taps (not swipes) the last card.
+   * Used by sanctuary scenes to return to the hub.
+   */
+  onLastCardTap?: () => void;
   showDots?: boolean;
   className?: string;
 }
+
+// Movement under this threshold (px) within TAP_MAX_DURATION counts as a tap, not a swipe.
+const TAP_MAX_DISTANCE = 8;
+const TAP_MAX_DURATION = 350;
 
 // ---------------------------------------------------------------------------
 // SwipeCarousel — native scroll-snap + gesture detection
@@ -26,12 +37,16 @@ interface SwipeCarouselProps {
 export default function SwipeCarousel({
   children,
   onIndexChange,
+  onLastCardTap,
   showDots = true,
   className = '',
 }: SwipeCarouselProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const pointerStart = useRef<{ x: number; y: number; t: number } | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
-  const childCount = children.length;
+  // Normalize single child / array uniformly
+  const childArray = Children.toArray(children);
+  const childCount = childArray.length;
 
   // Track scroll position to determine active index
   const handleScroll = useCallback(() => {
@@ -48,6 +63,7 @@ export default function SwipeCarousel({
     if (clamped !== activeIndex) {
       setActiveIndex(clamped);
       onIndexChange?.(clamped);
+      getAudioEngine().playInteraction(usePortalStore.getState().currentScene);
     }
   }, [activeIndex, childCount, onIndexChange]);
 
@@ -69,11 +85,41 @@ export default function SwipeCarousel({
     return () => el.removeEventListener('scroll', handleScroll);
   }, [handleScroll]);
 
+  // Tap-to-advance: tap on a card → next card; tap on last card → onLastCardTap
+  // Uses pointer movement + duration thresholds so that swipes never fire as taps.
+  const handlePointerDown = useCallback((e: ReactPointerEvent) => {
+    pointerStart.current = { x: e.clientX, y: e.clientY, t: Date.now() };
+  }, []);
+
+  const handlePointerUp = useCallback((e: ReactPointerEvent) => {
+    const start = pointerStart.current;
+    pointerStart.current = null;
+    if (!start) return;
+
+    const dx = e.clientX - start.x;
+    const dy = e.clientY - start.y;
+    const dt = Date.now() - start.t;
+
+    if (Math.hypot(dx, dy) > TAP_MAX_DISTANCE || dt > TAP_MAX_DURATION) return;
+
+    // Suppress taps that originate on interactive elements (dot buttons, etc.)
+    const target = e.target as HTMLElement | null;
+    if (target?.closest('button, a, [role="button"], input, textarea, select')) return;
+
+    if (activeIndex >= childCount - 1) {
+      onLastCardTap?.();
+    } else {
+      scrollToIndex(activeIndex + 1);
+    }
+  }, [activeIndex, childCount, onLastCardTap, scrollToIndex]);
+
   return (
     <div className={`relative w-full ${className}`}>
       {/* Scrollable card container */}
       <div
         ref={containerRef}
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
         className="flex w-full overflow-x-auto overflow-y-hidden"
         style={{
           scrollSnapType: 'x mandatory',
@@ -81,13 +127,14 @@ export default function SwipeCarousel({
           touchAction: 'pan-x',
           scrollbarWidth: 'none',       // Firefox
           msOverflowStyle: 'none',      // IE/Edge
+          cursor: 'pointer',
         }}
       >
         {/* Hide scrollbar for WebKit */}
         <style>{`
           .carousel-scroll::-webkit-scrollbar { display: none; }
         `}</style>
-        {children.map((child, i) => (
+        {childArray.map((child, i) => (
           <div
             key={i}
             className="carousel-scroll w-full flex-shrink-0"
@@ -104,7 +151,7 @@ export default function SwipeCarousel({
       {/* Dot indicators */}
       {showDots && childCount > 1 && (
         <div className="flex justify-center items-center gap-3 mt-lg py-sm">
-          {children.map((_, i) => {
+          {childArray.map((_, i) => {
             const isActive = i === activeIndex;
             return (
               <button
