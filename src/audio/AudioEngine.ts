@@ -257,12 +257,17 @@ export class AudioEngine {
   }
 
   /**
-   * Stop a scene's base layer.
+   * Stop a scene's base layer and any in-flight interaction sound.
+   * Interaction sounds must be stopped explicitly because Howler plays them
+   * fire-and-forget — they outlive scene transitions unless cancelled here.
+   * This is especially important for BASE whose breathing-ambient clip is long.
    */
   private stopScene(scene: LoadedScene): void {
-    if (scene.playId === null) return;
-    scene.base.stop(scene.playId);
-    scene.playId = null;
+    if (scene.playId !== null) {
+      scene.base.stop(scene.playId);
+      scene.playId = null;
+    }
+    scene.interaction?.stop();
   }
 
   /**
